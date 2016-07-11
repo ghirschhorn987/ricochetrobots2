@@ -29,8 +29,7 @@ public class Board {
     }
   }
 
-
-  private BoardItem getBoardItem(Position position) {
+  public BoardItem getBoardItem(Position position) {
     for (BoardItem boardItem : boardItems) {
       if (boardItem.getPosition().equals(position)) {
         return boardItem;

@@ -7,25 +7,28 @@ import java.util.Map;
 
 public class Game {
 
-  public static final int MAX_DEPTH = 5;
-  public static final int MAX_Y = 16;
-  public static final int MAX_X = 16;
+  private static final int MAX_DEPTH = 5;
   private static final int MAX_WINNER_SIZE = 1;
 
-  private Move rootPosition;
+  private Move rootMove;
   private Board board;
 
   public static void main(String[] args) {
-    for (int i = 0; i <= 15; i++) {
+    GameFactory gameFactory = new GameFactory();
+    for (int iteration = 0; iteration <= 15; iteration++) {
       System.out.println("======================================");
-      Game game = new Game();
-      game.createInitialState(i);
+      Game game = gameFactory.createGame(iteration);
       game.play();
     }
   }
 
-  Move getRootPosition() {
-    return rootPosition;
+  public Game(Board board, Move rootMove) {
+    this.board = board;
+    this.rootMove = rootMove;
+  }
+  
+  Move getRootMove() {
+    return rootMove;
   }
 
   Board getBoard() {
@@ -35,11 +38,11 @@ public class Game {
   private void play() {
 	  List<Move> winners = new ArrayList<>();
     int mostRecentDepth = -1;
-    System.out.println("Target: " + rootPosition.getBoardState().getChosenTarget() + " at position "
-        + board.getTargetPosition(rootPosition.getBoardState().getChosenTarget()));
+    System.out.println("Target: " + rootMove.getBoardState().getChosenTarget() + " at position "
+        + board.getTargetPosition(rootMove.getBoardState().getChosenTarget()));
 
     UnprocessedMoves unprocessedMoves = new UnprocessedMoves(UnprocessedMoves.SearchMode.BFS);
-    unprocessedMoves.add(rootPosition);
+    unprocessedMoves.add(rootMove);
 
     int movesProcessed = 0;
     while (!(unprocessedMoves.isEmpty())) {
@@ -177,56 +180,8 @@ public class Game {
     return false;
   }
 
-  void createInitialState(int iteration) {
-    board = new Board(createTargetsToPositions(), createBoardItems());
-    rootPosition = new Move(null, createInitialBoardState(iteration), null);
-  }
 
-  private List<BoardItem> createBoardItems() {
-    List<BoardItem> boardItems = new ArrayList<>();
-    BoardSection upperLeft = BoardSection.createBoardSectionA1();
-    BoardSection upperRight = BoardSection.createBoardSectionB1().shiftRight();
-    BoardSection bottomRight = BoardSection.createBoardSectionC1().shiftRight().shiftDown();
-    BoardSection bottomLeft = BoardSection.createBoardSectionD1().shiftDown();
 
-    boardItems.addAll(upperLeft.getBoardItems());
-    boardItems.addAll(upperRight.getBoardItems());
-    boardItems.addAll(bottomRight.getBoardItems());
-    boardItems.addAll(bottomLeft.getBoardItems());
-
-    return boardItems;
-  }
-
-  private Map<Target, Position> createTargetsToPositions() {
-    Map<Target, Position> targetsToPosition = new HashMap<>();
-    BoardSection upperLeft = BoardSection.createBoardSectionA1();
-    BoardSection upperRight = BoardSection.createBoardSectionB1().shiftRight();
-    BoardSection bottomRight = BoardSection.createBoardSectionC1().shiftRight().shiftDown();
-    BoardSection bottomLeft = BoardSection.createBoardSectionD1().shiftDown();
-    
-    targetsToPosition.putAll(upperLeft.getTargetsToPosition());
-    targetsToPosition.putAll(upperRight.getTargetsToPosition());
-    targetsToPosition.putAll(bottomRight.getTargetsToPosition());
-    targetsToPosition.putAll(bottomLeft.getTargetsToPosition());
-
-    return targetsToPosition;
-  }
-
-  private BoardState createInitialBoardState(int iteration) {
-    return new BoardState(selectChosenTarget(iteration), createRobotsToPositions());
-  }
-
-  private Map<Color, Position> createRobotsToPositions() {
-    Map<Color, Position> map = new HashMap<>();
-    map.put(Color.Blue, Position.of(0, 0));
-    map.put(Color.Red, Position.of(0, (MAX_Y - 1)));
-    map.put(Color.Green, Position.of((MAX_X - 1), 0));
-    map.put(Color.Yellow, Position.of((MAX_X - 1), (MAX_Y - 1)));
-    return map;
-  }
-
-  private Target selectChosenTarget(int position) {
-    return Target.getTargets().get(position);
-  }
+  
 
 }

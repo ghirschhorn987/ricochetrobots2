@@ -5,24 +5,19 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class GameInitializer {
+public class GameFactory {
 
-  private static List<BoardItem> createBoardItems() {
-    List<BoardItem> boardItems = new ArrayList<>();
-    BoardSection upperLeft = BoardSection.createBoardSectionA1();
-    BoardSection upperRight = BoardSection.createBoardSectionB1().shiftRight();
-    BoardSection bottomRight = BoardSection.createBoardSectionC1().shiftRight().shiftDown();
-    BoardSection bottomLeft = BoardSection.createBoardSectionD1().shiftDown();
-
-    boardItems.addAll(upperLeft.getBoardItems());
-    boardItems.addAll(upperRight.getBoardItems());
-    boardItems.addAll(bottomRight.getBoardItems());
-    boardItems.addAll(bottomLeft.getBoardItems());
-
-    return boardItems;
+  public static final int MAX_Y = 16;
+  public static final int MAX_X = 16;
+  
+  public Game createGame(int iteration) {
+    Board board = new Board(createTargetsToPositions(), createBoardItems());
+    Move rootMove = new Move(null, createInitialBoardState(iteration), null);
+    Game game = new Game(board, rootMove);
+    return game;
   }
   
-  private static Map<Target, Position> createTargetsToPositions() {
+  private Map<Target, Position> createTargetsToPositions() {
     Map<Target, Position> targetsToPosition = new HashMap<>();
     BoardSection upperLeft = BoardSection.createBoardSectionA1();
     BoardSection upperRight = BoardSection.createBoardSectionB1().shiftRight();
@@ -37,11 +32,30 @@ public class GameInitializer {
     return targetsToPosition;
   }
 
-  private static BoardState createInitialBoardState(int iteration) {
-    return new BoardState(selectChosenTarget(iteration), createRobotsToPositions());
+  private List<BoardItem> createBoardItems() {
+    List<BoardItem> boardItems = new ArrayList<>();
+    BoardSection upperLeft = BoardSection.createBoardSectionA1();
+    BoardSection upperRight = BoardSection.createBoardSectionB1().shiftRight();
+    BoardSection bottomRight = BoardSection.createBoardSectionC1().shiftRight().shiftDown();
+    BoardSection bottomLeft = BoardSection.createBoardSectionD1().shiftDown();
+
+    boardItems.addAll(upperLeft.getBoardItems());
+    boardItems.addAll(upperRight.getBoardItems());
+    boardItems.addAll(bottomRight.getBoardItems());
+    boardItems.addAll(bottomLeft.getBoardItems());
+
+    return boardItems;
+  }
+  
+  private BoardState createInitialBoardState(int iteration) {
+    return new BoardState(chooseTarget(iteration), createRobotsToPositions());
   }
 
-  private static Map<Color, Position> createRobotsToPositions() {
+  private Target chooseTarget(int position) {
+    return Target.getTargets().get(position);
+  }
+  
+  private Map<Color, Position> createRobotsToPositions() {
     Map<Color, Position> map = new HashMap<>();
     map.put(Color.Blue, Position.of(0, 0));
     map.put(Color.Red, Position.of(0, (MAX_Y - 1)));
@@ -50,7 +64,4 @@ public class GameInitializer {
     return map;
   }
 
-  private static Target selectChosenTarget(int position) {
-    return Target.getTargets().get(position);
-  }
 }

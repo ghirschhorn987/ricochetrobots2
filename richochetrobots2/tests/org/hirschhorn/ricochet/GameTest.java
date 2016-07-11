@@ -2,7 +2,9 @@ package org.hirschhorn.ricochet;
 
 import static org.junit.Assert.*;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.hirschhorn.ricochet.BoardState;
@@ -13,32 +15,50 @@ import org.hirschhorn.ricochet.MoveAction;
 import org.hirschhorn.ricochet.Move;
 import org.hirschhorn.ricochet.Position;
 import org.hirschhorn.ricochet.Target;
+import org.junit.Before;
 import org.junit.Test;
 
 public class GameTest {
 
+  private Board board;
+  
+  @Before
+  public void setUp() {
+    Map<Target, Position> targetsToPositions = new HashMap<>();
+    Target target = Target.getTarget(Color.Blue, Shape.Moon);
+    targetsToPositions.put(target,  Position.of(0, 5));
+    
+    List<BoardItem> boardItems = new ArrayList<>();
+    for (int x = 0; x < 8; x++) {
+      for (int y = 0; y < 8; y++) {
+        boardItems.add(new BoardItem(Position.of(x, y)));       
+      }
+    }
+    boardItems.add((new BoardItem(Position.of(0, 5))).setSouthWall(true));
+ 
+    board = new Board(targetsToPositions, boardItems);    
+  } 
+  
   @Test
   public void createChildMoveShouldCreateChildMove() {
-    Game game = new Game();
-    game.createInitialState(0);
+    Target target = Target.getTarget(Color.Blue, Shape.Moon);
+    Map<Color, Position> robotToPositions = new HashMap<>();
+    robotToPositions.put(Color.Blue, Position.of(0, 0));
+    BoardState boardState = new BoardState(target, robotToPositions);
     
-    Move parentMove = game.getRootPosition();
+    Move rootMove = new Move(null, boardState, null);
+
+    Game game = new Game(board, rootMove);
+    
+    Move parentMove = game.getRootMove();
     Move actualMove = game.createChildMove(parentMove, Color.Blue, Direction.South);
+    robotToPositions.put(Color.Blue, Position.of(0, 5));
     
-    BoardState expectedBoardState = new BoardState(Target.getTargets().get(0), createRobotToPosition());
-    MoveAction expectedMoveAction = new MoveAction(Color.Blue, Direction.South, 14);
+    BoardState expectedBoardState = new BoardState(target, robotToPositions);
+    MoveAction expectedMoveAction = new MoveAction(Color.Blue, Direction.South, 5);
     Move expectedMove = new Move(parentMove, expectedBoardState, expectedMoveAction);
     assertEquals(expectedMove.toString(), actualMove.toString());
   }
-
-  private Map<Color, Position> createRobotToPosition() {
-    Map<Color, Position> map = new HashMap<>();
-    map.put(Color.Blue, Position.of(0, 0));
-    map.put(Color.Red, Position.of(0, (Game.MAX_Y-1)));
-    map.put(Color.Green, Position.of((Game.MAX_X -1), 0));
-    map.put(Color.Yellow, Position.of((Game.MAX_X-1), (Game.MAX_Y-1)));
-    return map;
-  }  
   
 }
  

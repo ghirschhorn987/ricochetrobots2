@@ -13,7 +13,7 @@ public class BoardState {
     this.robotToPosition = robotToPosition;
   }
   
-  // Makes a copy of boardstate
+  // Makes a copy of BoardState
   public BoardState(BoardState boardState) {
     this.chosenTarget = boardState.chosenTarget;
     this.robotToPosition = new HashMap<>(boardState.robotToPosition);
