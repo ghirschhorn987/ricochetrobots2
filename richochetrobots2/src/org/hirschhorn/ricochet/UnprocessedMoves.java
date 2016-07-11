@@ -62,4 +62,18 @@ public class UnprocessedMoves {
     }
   }
 
+  public void clear() {
+    switch (searchMode) {
+    case BFS:
+      queue.clear();
+      break;
+    case DFS:
+      stack.clear();
+      break;
+    default:
+      throw new AssertionError("Unknown SearchMode: " + searchMode);
+    }
+    
+  }
+
 }

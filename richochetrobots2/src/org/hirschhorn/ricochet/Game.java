@@ -7,7 +7,7 @@ import java.util.Map;
 
 public class Game {
 
-  public static final int MAX_DEPTH = 10;
+  public static final int MAX_DEPTH = 5;
   public static final int MAX_Y = 16;
   public static final int MAX_X = 16;
   private static final int MAX_WINNER_SIZE = 1;
@@ -33,30 +33,40 @@ public class Game {
   }
 
   private void play() {
-    List<Move> winners = new ArrayList<>();
-    UnprocessedMoves movesToProcess = new UnprocessedMoves(UnprocessedMoves.SearchMode.BFS);
-    movesToProcess.add(rootPosition);
-    int lastDepth = -1;
+	  List<Move> winners = new ArrayList<>();
+    int mostRecentDepth = -1;
     System.out.println("Target: " + rootPosition.getBoardState().getChosenTarget() + " at position "
         + board.getTargetPosition(rootPosition.getBoardState().getChosenTarget()));
-    while (winners.size() < MAX_WINNER_SIZE && !(movesToProcess.isEmpty())) {
-      Move move = movesToProcess.removeFirst();
-      if (move.getDepth() != lastDepth) {
+
+    UnprocessedMoves unprocessedMoves = new UnprocessedMoves(UnprocessedMoves.SearchMode.BFS);
+    unprocessedMoves.add(rootPosition);
+
+    int movesProcessed = 0;
+    while (!(unprocessedMoves.isEmpty())) {
+      Move move = unprocessedMoves.removeFirst();
+      movesProcessed++;
+      
+      if (move.getDepth() != mostRecentDepth) {
 //        System.out.println(move);
         System.out.println(move.getDepth());
 //        System.out.println("Winners size: " + winners.size());
-        lastDepth = move.getDepth();
+        mostRecentDepth = move.getDepth();
       }
-      List<Move> nextMoves = getNextMoves(move);
+      List<Move> nextMoves = createNextMoves(move);
       move.addChildren(nextMoves);
       for (Move nextMove : nextMoves) {
         if (isWinner(nextMove)) {
           winners.add(nextMove);
         } else if (shouldContinue(nextMove)) {
-          movesToProcess.add(nextMove);
+          unprocessedMoves.add(nextMove);
         }
       }
+      if (winners.size() >= MAX_WINNER_SIZE) {
+        unprocessedMoves.clear();
+      }
     }
+
+    System.out.println("movesProcessed: " + movesProcessed + ", depth: " + mostRecentDepth);
     printMoves(winners);
   }
 
@@ -102,7 +112,7 @@ public class Game {
     return boardState.getRobotPosition(targetColor).equals(board.getTargetPosition(chosenTarget));
   }
 
-  private List<Move> getNextMoves(Move parentMove) {
+  private List<Move> createNextMoves(Move parentMove) {
     List<Move> nextMoves = new ArrayList<>();
     for (Color color : Color.values()) {
       for (Direction direction : Direction.values()) {
