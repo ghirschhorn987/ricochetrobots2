@@ -7,12 +7,12 @@ import java.util.Map;
 
 public class Game {
 
-  public static final int MAX_DEPTH = 5;
+  public static final int MAX_DEPTH = 10;
   public static final int MAX_Y = 16;
   public static final int MAX_X = 16;
   private static final int MAX_WINNER_SIZE = 1;
 
-  private Node rootPosition;
+  private Move rootPosition;
   private Board board;
 
   public static void main(String[] args) {
@@ -24,7 +24,7 @@ public class Game {
     }
   }
 
-  Node getRootPosition() {
+  Move getRootPosition() {
     return rootPosition;
   }
 
@@ -33,34 +33,34 @@ public class Game {
   }
 
   private void play() {
-    List<Node> winners = new ArrayList<>();
-    NodeCollection nodesToProcess = new NodeCollection(NodeCollection.SearchMode.BFS);
-    nodesToProcess.add(rootPosition);
+    List<Move> winners = new ArrayList<>();
+    UnprocessedMoves movesToProcess = new UnprocessedMoves(UnprocessedMoves.SearchMode.BFS);
+    movesToProcess.add(rootPosition);
     int lastDepth = -1;
     System.out.println("Target: " + rootPosition.getBoardState().getChosenTarget() + " at position "
         + board.getTargetPosition(rootPosition.getBoardState().getChosenTarget()));
-    while (winners.size() < MAX_WINNER_SIZE && !(nodesToProcess.isEmpty())) {
-      Node node = nodesToProcess.removeFirst();
-      if (node.getDepth() != lastDepth) {
-//        System.out.println(node);
-        System.out.println(node.getDepth());
+    while (winners.size() < MAX_WINNER_SIZE && !(movesToProcess.isEmpty())) {
+      Move move = movesToProcess.removeFirst();
+      if (move.getDepth() != lastDepth) {
+//        System.out.println(move);
+        System.out.println(move.getDepth());
 //        System.out.println("Winners size: " + winners.size());
-        lastDepth = node.getDepth();
+        lastDepth = move.getDepth();
       }
-      List<Node> nextMoves = getNextMoves(node);
-      node.addChildren(nextMoves);
-      for (Node nextMove : nextMoves) {
+      List<Move> nextMoves = getNextMoves(move);
+      move.addChildren(nextMoves);
+      for (Move nextMove : nextMoves) {
         if (isWinner(nextMove)) {
           winners.add(nextMove);
         } else if (shouldContinue(nextMove)) {
-          nodesToProcess.add(nextMove);
+          movesToProcess.add(nextMove);
         }
       }
     }
-    printNodes(winners);
+    printMoves(winners);
   }
 
-  private boolean shouldContinue(Node nextMove) {
+  private boolean shouldContinue(Move nextMove) {
     if (nextMove.getDepth() > MAX_DEPTH) {
       return false;
     }
@@ -80,43 +80,43 @@ public class Game {
     return true;
   }
 
-  private boolean boardStateHasPreviouslyExisted(Node move) {
+  private boolean boardStateHasPreviouslyExisted(Move move) {
    // TODO: Need to implement
     return false;
   }
 
-  private boolean noRobotsHaveMoved(Node node) {
-    return node.getMove().getNumberOfSpaces() == 0;
+  private boolean noRobotsHaveMoved(Move move) {
+    return move.getMove().getNumberOfSpaces() == 0;
   }
 
-  private void printNodes(List<Node> nodes) {
-    for (Node node : nodes) {
-      System.out.println(node.asMovesString());
+  private void printMoves(List<Move> moves) {
+    for (Move move : moves) {
+      System.out.println(move.asMovesString());
     }
   }
 
-  private boolean isWinner(Node nextMove) {
+  private boolean isWinner(Move nextMove) {
     BoardState boardState = nextMove.getBoardState();
     Target chosenTarget = boardState.getChosenTarget();
     Color targetColor = chosenTarget.getColor();
     return boardState.getRobotPosition(targetColor).equals(board.getTargetPosition(chosenTarget));
   }
 
-  private List<Node> getNextMoves(Node parentNode) {
-    List<Node> nextMoves = new ArrayList<>();
+  private List<Move> getNextMoves(Move parentMove) {
+    List<Move> nextMoves = new ArrayList<>();
     for (Color color : Color.values()) {
       for (Direction direction : Direction.values()) {
-        Node nextMove = createNewNode(parentNode, color, direction);
+        Move nextMove = createChildMove(parentMove, color, direction);
         nextMoves.add(nextMove);
       }
     }
     return nextMoves;
   }
 
-  Node createNewNode(Node parentNode, Color robot, Direction direction) {
-    BoardState currentBoardState = new BoardState(parentNode.getBoardState());
+  Move createChildMove(Move parentMove, Color robot, Direction direction) {
+    BoardState currentBoardState = new BoardState(parentMove.getBoardState());
     int numberOfSpaces = 0;
-    Position robotPosition = parentNode.getBoardState().getRobotPosition(robot);
+    Position robotPosition = parentMove.getBoardState().getRobotPosition(robot);
     boolean hitObject = false;
     while (!hitObject) {
       Position potentialPosition = getAdjacentPosition(robotPosition, direction);
@@ -130,8 +130,8 @@ public class Game {
         currentBoardState.setRobotPosition(robot, robotPosition);
       }
     }
-    Move move = new Move(robot, direction, numberOfSpaces);
-    Node nextMove = new Node(parentNode, currentBoardState, move);
+    MoveAction moveAction = new MoveAction(robot, direction, numberOfSpaces);
+    Move nextMove = new Move(parentMove, currentBoardState, moveAction);
     return nextMove;
   }
 
@@ -169,7 +169,7 @@ public class Game {
 
   void createInitialState(int iteration) {
     board = new Board(createTargetsToPositions(), createBoardItems());
-    rootPosition = new Node(null, createInitialBoardState(iteration), null);
+    rootPosition = new Move(null, createInitialBoardState(iteration), null);
   }
 
   private List<BoardItem> createBoardItems() {

@@ -4,17 +4,17 @@ import java.util.LinkedList;
 import java.util.Queue;
 import java.util.Stack;
 
-public class NodeCollection {
+public class UnprocessedMoves {
 
   public enum SearchMode {
     DFS, BFS
   }
 
   private SearchMode searchMode = SearchMode.BFS;
-  private Queue<Node> queue;
-  private Stack<Node> stack;
+  private Queue<Move> queue;
+  private Stack<Move> stack;
 
-  public NodeCollection(SearchMode searchMode) {
+  public UnprocessedMoves(SearchMode searchMode) {
     switch (searchMode) {
     case BFS:
       queue = new LinkedList<>();
@@ -38,7 +38,7 @@ public class NodeCollection {
     }
   }
 
-  public Node removeFirst() {
+  public Move removeFirst() {
     switch (searchMode) {
     case BFS:
       return queue.poll();
@@ -49,7 +49,7 @@ public class NodeCollection {
     }
   }
 
-  public void add(Node nextMove) {
+  public void add(Move nextMove) {
     switch (searchMode) {
     case BFS:
       queue.add(nextMove);

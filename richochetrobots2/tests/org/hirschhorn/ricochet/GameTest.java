@@ -9,8 +9,8 @@ import org.hirschhorn.ricochet.BoardState;
 import org.hirschhorn.ricochet.Color;
 import org.hirschhorn.ricochet.Direction;
 import org.hirschhorn.ricochet.Game;
+import org.hirschhorn.ricochet.MoveAction;
 import org.hirschhorn.ricochet.Move;
-import org.hirschhorn.ricochet.Node;
 import org.hirschhorn.ricochet.Position;
 import org.hirschhorn.ricochet.Target;
 import org.junit.Test;
@@ -18,17 +18,17 @@ import org.junit.Test;
 public class GameTest {
 
   @Test
-  public void createNewNodeShouldCreateNewNode() {
+  public void createChildMoveShouldCreateChildMove() {
     Game game = new Game();
     game.createInitialState(0);
     
-    Node parentNode = game.getRootPosition();
-    Node actualNode = game.createNewNode(parentNode, Color.Blue, Direction.South);
+    Move parentMove = game.getRootPosition();
+    Move actualMove = game.createChildMove(parentMove, Color.Blue, Direction.South);
     
     BoardState expectedBoardState = new BoardState(Target.getTargets().get(0), createRobotToPosition());
-    Move expectedMove = new Move(Color.Blue, Direction.South, 14);
-    Node expectedNode = new Node(parentNode, expectedBoardState, expectedMove);
-    assertEquals(expectedNode.toString(), actualNode.toString());
+    MoveAction expectedMoveAction = new MoveAction(Color.Blue, Direction.South, 14);
+    Move expectedMove = new Move(parentMove, expectedBoardState, expectedMoveAction);
+    assertEquals(expectedMove.toString(), actualMove.toString());
   }
 
   private Map<Color, Position> createRobotToPosition() {
