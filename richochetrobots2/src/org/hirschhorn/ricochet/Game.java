@@ -2,19 +2,24 @@ package org.hirschhorn.ricochet;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 public class Game {
 
   private static final int MAX_DEPTH = 5;
   private static final int MAX_WINNER_SIZE = 1;
 
+  private static Logger logger = Logger.getLogger(Game.class.getName());
   private Move rootMove;
   private Board board;
 
   public static void main(String[] args) {
+    logger.setLevel(Level.ALL);
+    
     GameFactory gameFactory = new GameFactory();
     for (int iteration = 0; iteration <= 15; iteration++) {
-      System.out.println("======================================");
+      logger.info("======================================");
       Game game = gameFactory.createGame(iteration);
       game.play();
     }
@@ -36,7 +41,7 @@ public class Game {
   private void play() {
 	  List<Move> winners = new ArrayList<>();
     int mostRecentDepth = -1;
-    System.out.println("Target: " + rootMove.getBoardState().getChosenTarget() + " at position "
+    logger.info("Target: " + rootMove.getBoardState().getChosenTarget() + " at position "
         + board.getTargetPosition(rootMove.getBoardState().getChosenTarget()));
 
     UnprocessedMoves unprocessedMoves = new UnprocessedMoves(UnprocessedMoves.SearchMode.BFS);
@@ -48,9 +53,9 @@ public class Game {
       movesProcessed++;
       
       if (move.getDepth() != mostRecentDepth) {
-//        System.out.println(move);
-        System.out.println(move.getDepth());
-//        System.out.println("Winners size: " + winners.size());
+//        logger.info(move);
+        logger.info("Depth: "  + move.getDepth());
+//        logger.info("Winners size: " + winners.size());
         mostRecentDepth = move.getDepth();
       }
       List<Move> nextMoves = createNextMoves(move);
@@ -67,7 +72,7 @@ public class Game {
       }
     }
 
-    System.out.println("movesProcessed: " + movesProcessed + ", depth: " + mostRecentDepth);
+    logger.info("movesProcessed: " + movesProcessed + ", depth: " + mostRecentDepth);
     printMoves(winners);
   }
 
@@ -102,7 +107,7 @@ public class Game {
 
   private void printMoves(List<Move> moves) {
     for (Move move : moves) {
-      System.out.println(move.asMovesString());
+      logger.info(move.asMovesString());
     }
   }
 
