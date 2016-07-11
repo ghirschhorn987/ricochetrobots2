@@ -51,7 +51,13 @@ public class BoardSection {
     get(7,3,boardItems).setWestWall(true);
     get(7,6,boardItems).setSouthWall(true);
     get(7,7,boardItems).setNorthWall(true).setWestWall(true);
-    return new BoardSection(boardItems, new HashMap<>());
+    
+    Map<Target, Position> targetsToPosition = new HashMap<>();
+    targetsToPosition.put(Target.getTarget(Color.Green, Shape.Sawblade), Position.of(1, 2));
+    targetsToPosition.put(Target.getTarget(Color.Red, Shape.Moon), Position.of(5, 1));
+    targetsToPosition.put(Target.getTarget(Color.Blue, Shape.Planet), Position.of(3, 6));
+    targetsToPosition.put(Target.getTarget(Color.Yellow, Shape.Star), Position.of(6, 3));
+    return new BoardSection(boardItems, targetsToPosition);
   }
   
   //upper right
@@ -86,7 +92,13 @@ public class BoardSection {
     get(7,2,boardItems).setWestWall(true);
     get(7,4,boardItems).setSouthWall(true);
     get(7,5,boardItems).setNorthWall(true);
-    return new BoardSection(boardItems, new HashMap<>());
+    
+    Map<Target, Position> targetsToPosition = new HashMap<>();
+    targetsToPosition.put(Target.getTarget(Color.Green, Shape.Star), Position.of(1, 1));
+    targetsToPosition.put(Target.getTarget(Color.Red, Shape.Planet), Position.of(2, 4));
+    targetsToPosition.put(Target.getTarget(Color.Blue, Shape.Sawblade), Position.of(4, 6));
+    targetsToPosition.put(Target.getTarget(Color.Yellow, Shape.Moon), Position.of(6, 2));
+    return new BoardSection(boardItems, targetsToPosition);
   }
  
   //bottom right
@@ -122,7 +134,13 @@ public class BoardSection {
     get(6,5,boardItems).setNorthWall(true);
     get(7,0,boardItems).setSouthWall(true);
     get(7,1,boardItems).setNorthWall(true);
-    return new BoardSection(boardItems, new HashMap<>());
+    
+    Map<Target, Position> targetsToPosition = new HashMap<>();
+    targetsToPosition.put(Target.getTarget(Color.Green, Shape.Planet), Position.of(2, 3));
+    targetsToPosition.put(Target.getTarget(Color.Red, Shape.Star), Position.of(5, 2));
+    targetsToPosition.put(Target.getTarget(Color.Blue, Shape.Moon), Position.of(1, 6));
+    targetsToPosition.put(Target.getTarget(Color.Yellow, Shape.Sawblade), Position.of(6, 4));
+    return new BoardSection(boardItems, targetsToPosition);
   }
   
   //bottom left
@@ -156,7 +174,13 @@ public class BoardSection {
     get(6,7,boardItems).setWestWall(true);
     get(7,0,boardItems).setWestWall(true).setSouthWall(true);
     get(7,1,boardItems).setNorthWall(true);
-    return new BoardSection(boardItems, new HashMap<>());
+
+    Map<Target, Position> targetsToPosition = new HashMap<>();
+    targetsToPosition.put(Target.getTarget(Color.Green, Shape.Moon), Position.of(2, 1));
+    targetsToPosition.put(Target.getTarget(Color.Red, Shape.Sawblade), Position.of(1, 6));
+    targetsToPosition.put(Target.getTarget(Color.Blue, Shape.Star), Position.of(4, 5));
+    targetsToPosition.put(Target.getTarget(Color.Yellow, Shape.Planet), Position.of(5, 0));
+    return new BoardSection(boardItems, targetsToPosition);
   }
   
   private static BoardItem get(int x, int y, List<BoardItem> boardItems) {
@@ -172,9 +196,14 @@ public class BoardSection {
   public List<BoardItem> getBoardItems() {
     return new ArrayList<>(boardItems);
   }
+  
+  public Map<Target, Position> getTargetsToPosition(){
+    return new HashMap<>(targetsToPositions);
+  }
 
   public BoardSection shiftRight() {
     List<BoardItem> shiftedBoardItems = new ArrayList<>();
+    Map<Target, Position> shiftedTargetsToPosition = new HashMap<>();
     for (BoardItem boardItem : boardItems) {
       int shiftedX = boardItem.getPosition().getX() + SHIFT_SIZE;
       int y = boardItem.getPosition().getY();
@@ -184,12 +213,18 @@ public class BoardSection {
           .setSouthWall(boardItem.hasSouthWall())
           .setWestWall(boardItem.hasWestWall());
       shiftedBoardItems.add(shifted);
+      for (Map.Entry<Target, Position> entry : targetsToPositions.entrySet()){
+        int shiftedXTarget = entry.getValue().getX() + SHIFT_SIZE;
+        int yTarget = entry.getValue().getY();
+        shiftedTargetsToPosition.put(entry.getKey(), Position.of(shiftedXTarget, yTarget));
+      }
     }
-    return new BoardSection(shiftedBoardItems, new HashMap<>());
+    return new BoardSection(shiftedBoardItems, shiftedTargetsToPosition);
   }
   
   public BoardSection shiftDown() {
     List<BoardItem> shiftedBoardItems = new ArrayList<>();
+    Map<Target, Position> shiftedTargetsToPosition = new HashMap<>();
     for (BoardItem boardItem : boardItems) {
       int x = boardItem.getPosition().getX();
       int shiftedY = boardItem.getPosition().getY() + SHIFT_SIZE;
@@ -200,7 +235,12 @@ public class BoardSection {
           .setWestWall(boardItem.hasWestWall());
       shiftedBoardItems.add(shifted);
     }
-    return new BoardSection(shiftedBoardItems, new HashMap<>());
+    for (Map.Entry<Target, Position> entry : targetsToPositions.entrySet()){
+      int xTarget = entry.getValue().getX();
+      int shiftedYTarget = entry.getValue().getY() + SHIFT_SIZE;
+      shiftedTargetsToPosition.put(entry.getKey(), Position.of(xTarget, shiftedYTarget));
+    }
+    return new BoardSection(shiftedBoardItems, shiftedTargetsToPosition);
   }
 
 }

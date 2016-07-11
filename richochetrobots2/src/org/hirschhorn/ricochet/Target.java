@@ -63,4 +63,18 @@ public class Target {
     return targets;
   }
   
+  public static Target getTarget(Color color, Shape shape){
+    for (Target target : targets) {
+      if (target.getColor().equals(color) && target.getShape().equals(shape)){
+        return target;
+      }
+    }
+    throw new AssertionError("Incorrect shape or color for target: " + shape + color);
+  }
+
+  @Override
+  public String toString() {
+    return "Target [color=" + color + ", shape=" + shape + "]";
+  }
+  
 }

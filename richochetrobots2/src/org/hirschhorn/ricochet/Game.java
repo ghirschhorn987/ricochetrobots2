@@ -5,22 +5,23 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-
-
 public class Game {
 
-  public static final int MAX_DEPTH = 2;
+  public static final int MAX_DEPTH = 5;
   public static final int MAX_Y = 16;
   public static final int MAX_X = 16;
-  private static final int MAX_WINNER_SIZE = 10;
-  
+  private static final int MAX_WINNER_SIZE = 1;
+
   private Node rootPosition;
-  private Board board;  
-  
+  private Board board;
+
   public static void main(String[] args) {
-    Game game = new Game();
-    game.createInitialState();
-    game.play();
+    for (int i = 0; i <= 15; i++) {
+      System.out.println("======================================");
+      Game game = new Game();
+      game.createInitialState(i);
+      game.play();
+    }
   }
 
   Node getRootPosition() {
@@ -30,25 +31,62 @@ public class Game {
   Board getBoard() {
     return board;
   }
-  
+
   private void play() {
     List<Node> winners = new ArrayList<>();
-    NodeCollection nodesToProcess = new NodeCollection();
+    NodeCollection nodesToProcess = new NodeCollection(NodeCollection.SearchMode.BFS);
     nodesToProcess.add(rootPosition);
-      while (winners.size() <= MAX_WINNER_SIZE) {
-        Node node = nodesToProcess.getFirst();
-        List<Node> nextMoves = getNextMoves(node);
-        node.addChildren(nextMoves);
-        for (Node nextMove : nextMoves) {
-          if (isWinner(nextMove)) {
-            winners.add(nextMove);
-          } else if (nextMove.getDepth() <= MAX_DEPTH) {
-            nodesToProcess.add(nextMove);
-          }
-        }
-        nodesToProcess.remove();
+    int lastDepth = -1;
+    System.out.println("Target: " + rootPosition.getBoardState().getChosenTarget() + " at position "
+        + board.getTargetPosition(rootPosition.getBoardState().getChosenTarget()));
+    while (winners.size() < MAX_WINNER_SIZE && !(nodesToProcess.isEmpty())) {
+      Node node = nodesToProcess.removeFirst();
+      if (node.getDepth() != lastDepth) {
+//        System.out.println(node);
+        System.out.println(node.getDepth());
+//        System.out.println("Winners size: " + winners.size());
+        lastDepth = node.getDepth();
       }
+      List<Node> nextMoves = getNextMoves(node);
+      node.addChildren(nextMoves);
+      for (Node nextMove : nextMoves) {
+        if (isWinner(nextMove)) {
+          winners.add(nextMove);
+        } else if (shouldContinue(nextMove)) {
+          nodesToProcess.add(nextMove);
+        }
+      }
+    }
     printNodes(winners);
+  }
+
+  private boolean shouldContinue(Node nextMove) {
+    if (nextMove.getDepth() > MAX_DEPTH) {
+      return false;
+    }
+    if (noRobotsHaveMoved(nextMove)) {
+      return false;
+    }
+    if (boardStateHasPreviouslyExisted(nextMove)) {
+      return false;
+    }
+//    if(nextMove.getParent() != null 
+//        && nextMove.getParent().getBoardState().getRobotPosition(nextMove.getMove().getRobot()).equals(Position.of(0, 0))){
+//      return true;
+//    }
+//    if (!nextMove.getMove().getRobot().equals(Color.Red)) {
+//      return false;
+//    }
+    return true;
+  }
+
+  private boolean boardStateHasPreviouslyExisted(Node move) {
+   // TODO: Need to implement
+    return false;
+  }
+
+  private boolean noRobotsHaveMoved(Node node) {
+    return node.getMove().getNumberOfSpaces() == 0;
   }
 
   private void printNodes(List<Node> nodes) {
@@ -57,7 +95,7 @@ public class Game {
     }
   }
 
-  private boolean isWinner(Node nextMove) {    
+  private boolean isWinner(Node nextMove) {
     BoardState boardState = nextMove.getBoardState();
     Target chosenTarget = boardState.getChosenTarget();
     Color targetColor = chosenTarget.getColor();
@@ -97,25 +135,24 @@ public class Game {
     return nextMove;
   }
 
-
   private Position getAdjacentPosition(Position robotPosition, Direction direction) {
     int newX = robotPosition.getX();
     int newY = robotPosition.getY();
     switch (direction) {
-      case North:
-        newY--;
-        break;
-      case South:
-        newY++;
-        break;
-       case East:
-         newX++;
-         break;
-       case West:
-         newX--;
-         break;
-       default:
-         throw new AssertionError("Unknown direction: " + direction);
+    case North:
+      newY--;
+      break;
+    case South:
+      newY++;
+      break;
+    case East:
+      newX++;
+      break;
+    case West:
+      newX--;
+      break;
+    default:
+      throw new AssertionError("Unknown direction: " + direction);
     }
     Position adjacentPosition = Position.of(newX, newY);
     return adjacentPosition;
@@ -130,27 +167,9 @@ public class Game {
     return false;
   }
 
-  private List<Node> getNodesForDepth(int targetDepth) {
-    List<Node> parentNodes = new ArrayList<>();
-    List<Node> childrenNodes = null;
-    parentNodes.add(rootPosition);
-    if (targetDepth == 0) {
-      return parentNodes;
-    } else {
-      for (int x=0; x < targetDepth; x++) {
-        childrenNodes = new ArrayList<>();
-        for (Node parentNode : parentNodes) {
-          childrenNodes.addAll(parentNode.getChildren());
-        }
-        parentNodes = childrenNodes;
-      }
-    }  
-    return childrenNodes;
-  }
-  
-  void createInitialState() {
+  void createInitialState(int iteration) {
     board = new Board(createTargetsToPositions(), createBoardItems());
-    rootPosition = new Node(null, createInitialBoardState(), null);
+    rootPosition = new Node(null, createInitialBoardState(iteration), null);
   }
 
   private List<BoardItem> createBoardItems() {
@@ -159,7 +178,7 @@ public class Game {
     BoardSection upperRight = BoardSection.createBoardSectionB1().shiftRight();
     BoardSection bottomRight = BoardSection.createBoardSectionC1().shiftRight().shiftDown();
     BoardSection bottomLeft = BoardSection.createBoardSectionD1().shiftDown();
-    
+
     boardItems.addAll(upperLeft.getBoardItems());
     boardItems.addAll(upperRight.getBoardItems());
     boardItems.addAll(bottomRight.getBoardItems());
@@ -169,30 +188,35 @@ public class Game {
   }
 
   private Map<Target, Position> createTargetsToPositions() {
-    Map<Target, Position> map = new HashMap<>();
-    List<Target> targets = Target.getTargets();
-    map.put(targets.get(0), Position.of(0, 0));
-    return map;
+    Map<Target, Position> targetsToPosition = new HashMap<>();
+    BoardSection upperLeft = BoardSection.createBoardSectionA1();
+    BoardSection upperRight = BoardSection.createBoardSectionB1().shiftRight();
+    BoardSection bottomRight = BoardSection.createBoardSectionC1().shiftRight().shiftDown();
+    BoardSection bottomLeft = BoardSection.createBoardSectionD1().shiftDown();
+    
+    targetsToPosition.putAll(upperLeft.getTargetsToPosition());
+    targetsToPosition.putAll(upperRight.getTargetsToPosition());
+    targetsToPosition.putAll(bottomRight.getTargetsToPosition());
+    targetsToPosition.putAll(bottomLeft.getTargetsToPosition());
+
+    return targetsToPosition;
   }
 
-  private BoardState createInitialBoardState() {
-    return new BoardState(selectChosenTarget(), createRobotsToPositions());
+  private BoardState createInitialBoardState(int iteration) {
+    return new BoardState(selectChosenTarget(iteration), createRobotsToPositions());
   }
 
   private Map<Color, Position> createRobotsToPositions() {
     Map<Color, Position> map = new HashMap<>();
     map.put(Color.Blue, Position.of(0, 0));
-    map.put(Color.Red, Position.of(0, (MAX_Y-1)));
-    map.put(Color.Green, Position.of((MAX_X-1), 0));
-    map.put(Color.Yellow, Position.of((MAX_X-1), (MAX_Y-1)));
+    map.put(Color.Red, Position.of(0, (MAX_Y - 1)));
+    map.put(Color.Green, Position.of((MAX_X - 1), 0));
+    map.put(Color.Yellow, Position.of((MAX_X - 1), (MAX_Y - 1)));
     return map;
   }
 
-  private Target selectChosenTarget() {
-    return Target.getTargets().get(0);
+  private Target selectChosenTarget(int position) {
+    return Target.getTargets().get(position);
   }
-  
-  
-  
-	
+
 }

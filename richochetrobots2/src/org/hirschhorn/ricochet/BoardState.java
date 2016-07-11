@@ -43,8 +43,5 @@ public class BoardState {
         Color.Yellow,
         getRobotPosition(Color.Yellow).asSimpleString());
   }
-   
-
-  //BoardState (positions of robots, chosen target) 
 
 }

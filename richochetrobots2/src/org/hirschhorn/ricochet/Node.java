@@ -12,11 +12,17 @@ public class Node {
 
   private List<Node> children;
   private Node parent;
+  private int depth;
   private BoardState boardState;
   private Move move;
   
   public Node(Node parent, BoardState boardState, Move move) {
     this.parent = parent;
+    if (parent == null) {
+      depth = 0;
+    } else {
+      depth = parent.getDepth() + 1;
+    }
     this.move = move;
     this.boardState = boardState;
     children = new ArrayList<>();
@@ -31,17 +37,19 @@ public class Node {
   }
 
   public int getDepth() {
-    int depth = 0;
-    Node ancestor = parent;
-    while (ancestor != null) {
-      depth++;
-      ancestor = ancestor.parent;
-    }
     return depth;
   }
 
   public List<Node> getChildren() {
     return children;
+  }
+  
+  public Node getParent(){
+    return parent;
+  }
+  
+  public Move getMove(){
+    return move;
   }
 
   public String toString() {
@@ -51,7 +59,7 @@ public class Node {
   public String asMovesString() {
     StringBuilder sb = new StringBuilder();
     int moveNum = 0;
-    for (Node node : getAncestors()) {      
+    for (Node node : getAncestorsFromRootDownToSelf()) {      
       Move move = node.move;
       if (move == null) {
         sb.append(node.boardState.asRobotPositionsString());
@@ -76,14 +84,30 @@ public class Node {
     return sb.toString();
   }
 
-  private List<Node> getAncestors() {
+  public List<Node> getAncestorsFromParentUp() {
     List<Node> ancestors = new ArrayList<>();
-    ancestors.add(this);
     Node ancestor = parent;
     while (ancestor != null) {
       ancestors.add(ancestor);
       ancestor = ancestor.parent;
     }
+    return ancestors;
+  }
+
+  public List<Node> getAncestorsFromSelfUp() {
+    List<Node> ancestors = getAncestorsFromParentUp();
+    ancestors.add(0, this);
+    return ancestors;
+  }
+  
+  public List<Node> getAncestorsFromRootDownToParent() {
+    List<Node> ancestors = getAncestorsFromParentUp();
+    Collections.reverse(ancestors);
+    return ancestors;
+  }
+  
+  public List<Node> getAncestorsFromRootDownToSelf() {
+    List<Node> ancestors = getAncestorsFromSelfUp();
     Collections.reverse(ancestors);
     return ancestors;
   }

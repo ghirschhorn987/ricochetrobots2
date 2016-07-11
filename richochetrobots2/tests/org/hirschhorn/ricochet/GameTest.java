@@ -20,7 +20,7 @@ public class GameTest {
   @Test
   public void createNewNodeShouldCreateNewNode() {
     Game game = new Game();
-    game.createInitialState();
+    game.createInitialState(0);
     
     Node parentNode = game.getRootPosition();
     Node actualNode = game.createNewNode(parentNode, Color.Blue, Direction.South);

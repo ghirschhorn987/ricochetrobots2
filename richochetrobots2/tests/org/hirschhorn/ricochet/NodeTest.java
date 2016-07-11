@@ -9,7 +9,7 @@ public class NodeTest {
   @Test
   public void testAsMovesString() {
     Game game = new Game();
-    game.createInitialState();
+    game.createInitialState(0);
     Node parentNode = game.getRootPosition();
     Node node = game.createNewNode(parentNode, Color.Blue, Direction.South);
     node = game.createNewNode(node, Color.Blue, Direction.West);

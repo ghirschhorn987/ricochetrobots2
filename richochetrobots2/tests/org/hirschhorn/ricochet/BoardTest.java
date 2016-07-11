@@ -11,7 +11,7 @@ public class BoardTest {
   @Test
   public void boardItemsShouldNotHaveBothEastAndWestWall() {
     Game game = new Game();
-    game.createInitialState();
+    game.createInitialState(0);
     for (BoardItem boardItem : game.getBoard().getBoardItems()) {
       if (boardItem.hasEastWall()) {
         assertFalse(boardItem.toString(), boardItem.hasWestWall());
@@ -25,7 +25,7 @@ public class BoardTest {
   @Test
   public void boardItemsShouldNotHaveBothNorthAndSouthWall() {
     Game game = new Game();
-    game.createInitialState();
+    game.createInitialState(0);
     for (BoardItem boardItem : game.getBoard().getBoardItems()) {
       if (boardItem.hasNorthWall()) {
         assertFalse(boardItem.toString(), boardItem.hasSouthWall());

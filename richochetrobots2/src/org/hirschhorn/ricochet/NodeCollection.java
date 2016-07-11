@@ -1,33 +1,65 @@
 package org.hirschhorn.ricochet;
 
+import java.util.LinkedList;
 import java.util.Queue;
+import java.util.Stack;
 
 public class NodeCollection {
 
-  private Queue<Node> queue;
-  
-  public NodeCollection(){
-    
+  public enum SearchMode {
+    DFS, BFS
   }
-  
-  public boolean isEmpty() {
-    if (queue.peek() == null) {
-      return true;
-    } else {
-      return false;
+
+  private SearchMode searchMode = SearchMode.BFS;
+  private Queue<Node> queue;
+  private Stack<Node> stack;
+
+  public NodeCollection(SearchMode searchMode) {
+    switch (searchMode) {
+    case BFS:
+      queue = new LinkedList<>();
+      break;
+    case DFS:
+      stack = new Stack<>();
+      break;
+    default:
+      throw new AssertionError("Unknown SearchMode: " + searchMode);
     }
   }
 
-  public Node getFirst() {
-    return queue.peek();
+  public boolean isEmpty() {
+    switch (searchMode) {
+    case BFS:
+      return queue.isEmpty();
+    case DFS:
+      return stack.isEmpty();
+    default:
+      throw new AssertionError("Unknown SearchMode: " + searchMode);
+    }
+  }
+
+  public Node removeFirst() {
+    switch (searchMode) {
+    case BFS:
+      return queue.poll();
+    case DFS:
+      return stack.pop();
+    default:
+      throw new AssertionError("Unknown SearchMode: " + searchMode);
+    }
   }
 
   public void add(Node nextMove) {
-    queue.add(nextMove);
-  }
-
-  public void remove() {
-    queue.remove();
+    switch (searchMode) {
+    case BFS:
+      queue.add(nextMove);
+      break;
+    case DFS:
+      stack.add(nextMove);
+      break;
+    default:
+      throw new AssertionError("Unknown SearchMode: " + searchMode);
+    }
   }
 
 }
