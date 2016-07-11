@@ -1,6 +1,7 @@
 package org.hirschhorn.ricochet;
 
 import java.util.List;
+import java.util.Set;
 import java.util.Map;
 
 public class Board {
