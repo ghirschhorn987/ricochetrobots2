@@ -7,7 +7,7 @@ import java.util.logging.Logger;
 
 public class Game {
 
-  private static final int MAX_DEPTH = 5;
+  private static final int MAX_DEPTH = 6;
   private static final int MAX_WINNER_SIZE = 1;
 
   private static Logger logger = Logger.getLogger(Game.class.getName());
@@ -15,10 +15,10 @@ public class Game {
   private Board board;
 
   public static void main(String[] args) {
-    logger.setLevel(Level.ALL);
+	logger.getParent().setLevel(Level.FINE);
     
     GameFactory gameFactory = new GameFactory();
-    for (int iteration = 0; iteration <= 15; iteration++) {
+    for (int iteration = 0; iteration <= 1; iteration++) {
       logger.info("======================================");
       Game game = gameFactory.createGame(iteration);
       game.play();
@@ -52,14 +52,16 @@ public class Game {
       Move move = unprocessedMoves.removeFirst();
       movesProcessed++;
       
+      logger.fine("Moves Processed: " + movesProcessed + " Move: " + move);
       if (move.getDepth() != mostRecentDepth) {
-//        logger.info(move);
+        logger.fine("" + move);
         logger.info("Depth: "  + move.getDepth());
-//        logger.info("Winners size: " + winners.size());
+        logger.fine("Winners size: " + winners.size());
         mostRecentDepth = move.getDepth();
       }
       List<Move> nextMoves = createNextMoves(move);
       move.addChildren(nextMoves);
+  	  logger.fine("looking at " + nextMoves.size() + " children");
       for (Move nextMove : nextMoves) {
         if (isWinner(nextMove)) {
           winners.add(nextMove);
@@ -69,23 +71,26 @@ public class Game {
       }
       if (winners.size() >= MAX_WINNER_SIZE) {
         unprocessedMoves.clear();
+
+        // If we don't change mostRecentDepth when we have a winner, it will be at the parent level  
+    	mostRecentDepth = winners.get(0).getDepth();
       }
     }
-
+    
     logger.info("movesProcessed: " + movesProcessed + ", depth: " + mostRecentDepth);
     printMoves(winners);
   }
 
   private boolean shouldContinue(Move nextMove) {
-    if (nextMove.getDepth() > MAX_DEPTH) {
+    if (nextMove.getDepth() >= MAX_DEPTH) {
       return false;
     }
-    if (noRobotsHaveMoved(nextMove)) {
-      return false;
-    }
-    if (boardStateHasPreviouslyExisted(nextMove)) {
-      return false;
-    }
+//    if (noRobotsHaveMoved(nextMove)) {
+//      return false;
+//    }
+//    if (boardStateHasPreviouslyExisted(nextMove)) {
+//      return false;
+//    }
 //    if(nextMove.getParent() != null 
 //        && nextMove.getParent().getBoardState().getRobotPosition(nextMove.getMove().getRobot()).equals(Position.of(0, 0))){
 //      return true;
