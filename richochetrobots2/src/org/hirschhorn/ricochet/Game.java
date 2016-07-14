@@ -7,7 +7,7 @@ import java.util.logging.Logger;
 
 public class Game {
 
-  private static final int MAX_DEPTH = 6;
+  private static final int MAX_DEPTH = 1000;
   private static final int MAX_WINNER_SIZE = 1;
 
   private static Logger logger = Logger.getLogger(Game.class.getName());
@@ -18,10 +18,16 @@ public class Game {
 	logger.getParent().setLevel(Level.FINE);
     
     GameFactory gameFactory = new GameFactory();
-    for (int iteration = 0; iteration <= 1; iteration++) {
+/*    UnprocessedMoves unprocessedMoves =
+    		UnprocessedMovesFactory.newBreadthFirstUnprocessedMoves();*/
+    UnprocessedMoves unprocessedMoves =
+    		UnprocessedMovesFactory.newPriorityQueueUnprocessedMoves();
+
+    for (int iteration = 0; iteration <= 0; iteration++) {
       logger.info("======================================");
       Game game = gameFactory.createGame(iteration);
-      game.play();
+      unprocessedMoves.clear();
+      game.play(unprocessedMoves);
     }
   }
 
@@ -38,13 +44,12 @@ public class Game {
     return board;
   }
 
-  private void play() {
+  private void play(UnprocessedMoves unprocessedMoves) {
 	  List<Move> winners = new ArrayList<>();
     int mostRecentDepth = -1;
     logger.info("Target: " + rootMove.getBoardState().getChosenTarget() + " at position "
         + board.getTargetPosition(rootMove.getBoardState().getChosenTarget()));
 
-    UnprocessedMoves unprocessedMoves = new UnprocessedMoves(UnprocessedMoves.SearchMode.BFS);
     unprocessedMoves.add(rootMove);
 
     int movesProcessed = 0;
@@ -66,6 +71,7 @@ public class Game {
         if (isWinner(nextMove)) {
           winners.add(nextMove);
         } else if (shouldContinue(nextMove)) {
+          nextMove.getPotential().adjustIfMoveSameColorAsTarget(nextMove);
           unprocessedMoves.add(nextMove);
         }
       }
@@ -107,7 +113,7 @@ public class Game {
   }
 
   private boolean noRobotsHaveMoved(Move move) {
-    return move.getMove().getNumberOfSpaces() == 0;
+    return move.getMoveAction().getNumberOfSpaces() == 0;
   }
 
   private void printMoves(List<Move> moves) {

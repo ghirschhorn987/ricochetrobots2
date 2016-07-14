@@ -2,7 +2,10 @@ package org.hirschhorn.ricochet;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
+
+import javax.print.attribute.standard.MediaSize.Other;
 
 public class Move {
 
@@ -11,8 +14,13 @@ public class Move {
   private int depth;
   private BoardState boardState;
   private MoveAction moveAction;
+  private Potential potential;
   
-  public Move(Move parent, BoardState boardState, MoveAction moveAction) {
+  public Potential getPotential() {
+	return potential;
+}
+
+public Move(Move parent, BoardState boardState, MoveAction moveAction) {
     this.parent = parent;
     if (parent == null) {
       depth = 0;
@@ -22,6 +30,7 @@ public class Move {
     this.moveAction = moveAction;
     this.boardState = boardState;
     children = new ArrayList<>();
+    potential = new Potential();
   }
   
   public void addChildren(List<Move> nextMoves) {
@@ -44,7 +53,7 @@ public class Move {
     return parent;
   }
   
-  public MoveAction getMove(){
+  public MoveAction getMoveAction(){
     return moveAction;
   }
 
@@ -107,6 +116,15 @@ public class Move {
     Collections.reverse(ancestors);
     return ancestors;
   }
+
+public static Comparator<Move> getPotentialComparator() {
+	return new Comparator<Move>(){
+		@Override
+		public int compare(Move move1, Move move2) {
+			return move1.getPotential().compareTo(move2.getPotential());
+		}
+	};
+}
 
   
   
