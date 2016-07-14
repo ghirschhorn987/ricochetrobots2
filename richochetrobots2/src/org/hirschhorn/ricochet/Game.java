@@ -15,7 +15,6 @@ public class Game {
   private Board board;
 
   public static void main(String[] args) {
-	logger.getParent().setLevel(Level.FINE);
     
     GameFactory gameFactory = new GameFactory();
 /*    UnprocessedMoves unprocessedMoves =
