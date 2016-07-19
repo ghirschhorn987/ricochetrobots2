@@ -31,20 +31,22 @@ public class GameTest {
     List<BoardItem> boardItems = new ArrayList<>();
     for (int x = 0; x < 8; x++) {
       for (int y = 0; y < 8; y++) {
-        boardItems.add(new BoardItem(Position.of(x, y)));       
+    	BoardItem boardItem = new BoardItem(Position.of(x, y));
+    	if (x == 0 && y == 5) {
+          boardItem.setSouthWall(true);    		
+    	}
+        boardItems.add(boardItem);       
       }
     }
-    boardItems.add((new BoardItem(Position.of(0, 5))).setSouthWall(true));
- 
     board = new Board(targetsToPositions, boardItems);    
   } 
   
   @Test
   public void createChildMoveShouldCreateChildMove() {
     Target target = Target.getTarget(Color.Blue, Shape.Moon);
-    List<Position> robotPositions = BoardState.createEmptyPositionList();
-    robotPositions.set(Color.Blue.ordinal(), Position.of(0, 0));
-    BoardState boardState = new BoardState(target, robotPositions);
+    RobotPositions.Builder robotPositions = new RobotPositions.Builder();
+    robotPositions.setRobotPosition(Color.Blue, Position.of(0, 0));
+    BoardState boardState = new BoardState(target, robotPositions.build());
     
     Move rootMove = new Move(null, boardState, null);
 
@@ -52,9 +54,10 @@ public class GameTest {
     
     Move parentMove = game.getRootMove();
     Move actualMove = game.createChildMove(parentMove, Color.Blue, Direction.South);
-    robotPositions.set(Color.Blue.ordinal(), Position.of(0, 5));
+    robotPositions = new RobotPositions.Builder();
+    robotPositions.setRobotPosition(Color.Blue, Position.of(0, 5));
     
-    BoardState expectedBoardState = new BoardState(target, robotPositions);
+    BoardState expectedBoardState = new BoardState(target, robotPositions.build());
     MoveAction expectedMoveAction = new MoveAction(Color.Blue, Direction.South, 5);
     Move expectedMove = new Move(parentMove, expectedBoardState, expectedMoveAction);
     assertEquals(expectedMove.toString(), actualMove.toString());

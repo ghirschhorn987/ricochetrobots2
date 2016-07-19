@@ -57,6 +57,10 @@ public Move(Move parent, BoardState boardState, MoveAction moveAction) {
     return moveAction;
   }
 
+  public Target getChosenTarget() {
+    return boardState.getChosenTarget();
+  }
+  
   public String toString() {
     return asMovesString();
   }
@@ -117,15 +121,14 @@ public Move(Move parent, BoardState boardState, MoveAction moveAction) {
     return ancestors;
   }
 
-public static Comparator<Move> getPotentialComparator() {
+  public static Comparator<Move> getPotentialComparator() {
 	return new Comparator<Move>(){
 		@Override
 		public int compare(Move move1, Move move2) {
 			return move1.getPotential().compareTo(move2.getPotential());
 		}
 	};
-}
-
+  }
   
   
 }

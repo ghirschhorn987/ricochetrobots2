@@ -1,16 +1,14 @@
 package org.hirschhorn.ricochet;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 public class BoardState {
 
   private Target chosenTarget;
-  private List<Position> robotPositions;
+  private RobotPositions robotPositions;
   
-  public BoardState(Target chosenTarget, List<Position> robotPositions) {
+  public BoardState(Target chosenTarget, RobotPositions robotPositions) {
     this.chosenTarget = chosenTarget;
     this.robotPositions = robotPositions;
   }
@@ -18,21 +16,18 @@ public class BoardState {
   // Makes a copy of BoardState
   public BoardState(BoardState boardState) {
     this.chosenTarget = boardState.chosenTarget;
-    this.robotPositions = new ArrayList<>();
-    for (Position position : boardState.robotPositions) {
-      this.robotPositions.add(Position.of(position.getX(),  position.getY()));
-    }
+    this.robotPositions = new RobotPositions(boardState.robotPositions);
   }
   
-  public Position getRobotPosition(Color robot) {
-    return robotPositions.get(robot.ordinal());
-  }
+	public RobotPositions getRobotPositions() {
+		  return robotPositions;
+		}
 
-  public void setRobotPosition(Color robot, Position robotPosition) {
-    robotPositions.set(robot.ordinal(), robotPosition);
+	public Position getRobotPosition(Color robot) {
+    return robotPositions.getRobotPosition(robot);
   }
   
-  public Target getChosenTarget(){
+  public Target getChosenTarget() {
     return chosenTarget;
   }
 
@@ -83,4 +78,5 @@ public class BoardState {
 	    positions.add(Position.of(0, 0));
 	    return positions;
 	}
+
 }

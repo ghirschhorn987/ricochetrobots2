@@ -145,24 +145,28 @@ public class Game {
   }
 
   Move createChildMove(Move parentMove, Color robot, Direction direction) {
-    BoardState currentBoardState = new BoardState(parentMove.getBoardState());
     int numberOfSpaces = 0;
-    Position robotPosition = parentMove.getBoardState().getRobotPosition(robot);
+    BoardState parentBoardState = parentMove.getBoardState();
+    RobotPositions.Builder robotPositionsBuilder = new RobotPositions.Builder(parentBoardState.getRobotPositions());    
+    Position robotPosition = robotPositionsBuilder.getRobotPosition(robot);
     boolean hitObject = false;
     while (!hitObject) {
       Position potentialPosition = getAdjacentPosition(robotPosition, direction);
-      if (hasRobot(potentialPosition, currentBoardState)) {
+      if (hasRobot(potentialPosition, robotPositionsBuilder)) {
         hitObject = true;
       } else if (board.hasWall(robotPosition, direction)) {
         hitObject = true;
       } else {
         robotPosition = potentialPosition;
         numberOfSpaces++;
-        currentBoardState.setRobotPosition(robot, robotPosition);
+        // Is this really needed? If this is only robot moving, do we need to update positions? Won't collide withself.
+        robotPositionsBuilder.setRobotPosition(robot, robotPosition);
       }
     }
+    
     MoveAction moveAction = new MoveAction(robot, direction, numberOfSpaces);
-    Move nextMove = new Move(parentMove, currentBoardState, moveAction);
+    BoardState childBoardState = new BoardState(parentMove.getChosenTarget(), robotPositionsBuilder.build());
+    Move nextMove = new Move(parentMove, childBoardState, moveAction);
     return nextMove;
   }
 
@@ -189,9 +193,9 @@ public class Game {
     return adjacentPosition;
   }
 
-  private boolean hasRobot(Position potentialPosition, BoardState currentBoardState) {
+  private boolean hasRobot(Position potentialPosition, RobotPositions.Builder positions) {
     for (Color robot : Color.values()) {
-      if (potentialPosition.equals(currentBoardState.getRobotPosition(robot))) {
+      if (potentialPosition.equals(positions.getRobotPosition(robot))) {
         return true;
       }
     }
