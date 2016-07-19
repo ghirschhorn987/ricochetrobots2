@@ -1,20 +1,25 @@
 package org.hirschhorn.ricochet;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class RobotPositions {
 
-	private List<Position> positions;
+	private Map<Color, Position> positions;
+//	private List<Position> positions;
 
 	public static class Builder {
-		private List<Position> positions;
+		private Map<Color, Position> positions;
+//		private List<Position> positions;
 
 		public Builder() {
-			positions = new ArrayList<>();
-			for (int i = 0; i < Color.values().length; i++) {
-				positions.add(null);
-			}
+			positions = new HashMap<>();
+//			positions = new ArrayList<>();
+//			for (int i = 0; i < Color.values().length; i++) {
+//				positions.add(null);
+//			}
 		}
 
 		public Builder(RobotPositions robotPositions) {
@@ -25,8 +30,8 @@ public class RobotPositions {
 		}
 
 		public Builder setRobotPosition(Color robot, Position position) {
-			int index = indexOfColor(robot);
-			positions.set(index, position);
+			positions.put(robot, position);
+//			positions.set(indexOfColor(robot), position);
 			return this;
 		}
 
@@ -35,20 +40,30 @@ public class RobotPositions {
 		}
 
 		public Position getRobotPosition(Color robot) {
-			return positions.get(indexOfColor(robot));
+			return positions.get(robot);
+//			return positions.get(indexOfColor(robot));
 		}
 	}
 
-	private RobotPositions(List<Position> positions) {
-		for (int i = 0; i < positions.size(); i++) {
-			Position position = positions.get(i);
+	private RobotPositions(Map<Color, Position> positions) {
+//	private RobotPositions(List<Position> positions) {
+		
+		//while (positions.size() < Color.values().length) {
+		//  positions.add(null);
+		//}
+		
+		for (Color color : Color.values()) {
+			Position position = positions.get(color);
+//			Position position = positions.get(indexOfColor(color));
 			if (position == null) {
-//				throw new IllegalArgumentException(
-//						"Cannot create RobotPositions because all positions are not specified: " + positions);
-				positions.set(i, Position.of(-1, -1));
+				//throw new IllegalArgumentException("Cannot create RobotPositions because not all positions are specified: " + positions);
+			    positions.put(color, Position.of(-1, -1));
+			    //  positions.set(index, Position.of(-1, -1));
 			}
 		}
-		this.positions = new ArrayList<>(positions);
+		
+		this.positions = new HashMap<>(positions);
+		//this.positions = new ArrayList<>(positions);
 	}
 
 	// Makes a copy of RobotPositions
@@ -87,7 +102,8 @@ public class RobotPositions {
 	}
 
 	public Position getRobotPosition(Color robot) {
-		return positions.get(indexOfColor(robot));
+		return positions.get(robot);
+		//return positions.get(indexOfColor(robot));
 	}
 
 	public String asRobotPositionsString() {

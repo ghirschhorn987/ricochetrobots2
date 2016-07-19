@@ -60,7 +60,7 @@ public class Game {
       
       if (movesProcessed % 10000 == 0) {
     	long elapsedMillis = System.currentTimeMillis() - startMillis;
-    	logger.info("Moves Processed: " + movesProcessed + " Elapsed (millis): " + elapsedMillis + " Move: " + move);  
+    	logger.info("Depth: " + move.getDepth() + " MovesProcessed: " + movesProcessed + " ElapsedSeconds: " + (elapsedMillis / 1000) + " Move: " + move);  
       }
       if (move.getDepth() != mostRecentDepth) {
         logger.fine("" + move);
