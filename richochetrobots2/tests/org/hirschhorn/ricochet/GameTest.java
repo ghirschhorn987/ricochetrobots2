@@ -42,9 +42,9 @@ public class GameTest {
   @Test
   public void createChildMoveShouldCreateChildMove() {
     Target target = Target.getTarget(Color.Blue, Shape.Moon);
-    Map<Color, Position> robotToPositions = new HashMap<>();
-    robotToPositions.put(Color.Blue, Position.of(0, 0));
-    BoardState boardState = new BoardState(target, robotToPositions);
+    List<Position> robotPositions = BoardState.createEmptyPositionList();
+    robotPositions.set(Color.Blue.ordinal(), Position.of(0, 0));
+    BoardState boardState = new BoardState(target, robotPositions);
     
     Move rootMove = new Move(null, boardState, null);
 
@@ -52,9 +52,9 @@ public class GameTest {
     
     Move parentMove = game.getRootMove();
     Move actualMove = game.createChildMove(parentMove, Color.Blue, Direction.South);
-    robotToPositions.put(Color.Blue, Position.of(0, 5));
+    robotPositions.set(Color.Blue.ordinal(), Position.of(0, 5));
     
-    BoardState expectedBoardState = new BoardState(target, robotToPositions);
+    BoardState expectedBoardState = new BoardState(target, robotPositions);
     MoveAction expectedMoveAction = new MoveAction(Color.Blue, Direction.South, 5);
     Move expectedMove = new Move(parentMove, expectedBoardState, expectedMoveAction);
     assertEquals(expectedMove.toString(), actualMove.toString());

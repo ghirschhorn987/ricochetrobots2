@@ -30,7 +30,7 @@ public Move(Move parent, BoardState boardState, MoveAction moveAction) {
     this.moveAction = moveAction;
     this.boardState = boardState;
     children = new ArrayList<>();
-    potential = new Potential();
+    potential = new Potential(); 
   }
   
   public void addChildren(List<Move> nextMoves) {

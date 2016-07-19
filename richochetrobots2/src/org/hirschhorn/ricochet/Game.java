@@ -7,7 +7,7 @@ import java.util.logging.Logger;
 
 public class Game {
 
-  private static final int MAX_DEPTH = 1000;
+  private static final int MAX_DEPTH = 10;
   private static final int MAX_WINNER_SIZE = 1;
 
   private static Logger logger = Logger.getLogger(Game.class.getName());
@@ -17,12 +17,12 @@ public class Game {
   public static void main(String[] args) {
     
     GameFactory gameFactory = new GameFactory();
-/*    UnprocessedMoves unprocessedMoves =
-    		UnprocessedMovesFactory.newBreadthFirstUnprocessedMoves();*/
     UnprocessedMoves unprocessedMoves =
-    		UnprocessedMovesFactory.newPriorityQueueUnprocessedMoves();
+    		UnprocessedMovesFactory.newBreadthFirstUnprocessedMoves();
+//    UnprocessedMoves unprocessedMoves =
+//    		UnprocessedMovesFactory.newPriorityQueueUnprocessedMoves();
 
-    for (int iteration = 0; iteration <= 0; iteration++) {
+    for (int iteration = 1; iteration <= 1; iteration++) {
       logger.info("======================================");
       Game game = gameFactory.createGame(iteration);
       unprocessedMoves.clear();
@@ -45,6 +45,8 @@ public class Game {
 
   private void play(UnprocessedMoves unprocessedMoves) {
 	  List<Move> winners = new ArrayList<>();
+	long startMillis = System.currentTimeMillis();
+    
     int mostRecentDepth = -1;
     logger.info("Target: " + rootMove.getBoardState().getChosenTarget() + " at position "
         + board.getTargetPosition(rootMove.getBoardState().getChosenTarget()));
@@ -56,7 +58,10 @@ public class Game {
       Move move = unprocessedMoves.removeFirst();
       movesProcessed++;
       
-      logger.fine("Moves Processed: " + movesProcessed + " Move: " + move);
+      if (movesProcessed % 10000 == 0) {
+    	long elapsedMillis = System.currentTimeMillis() - startMillis;
+    	logger.info("Moves Processed: " + movesProcessed + " Elapsed (millis): " + elapsedMillis + " Move: " + move);  
+      }
       if (move.getDepth() != mostRecentDepth) {
         logger.fine("" + move);
         logger.info("Depth: "  + move.getDepth());

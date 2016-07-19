@@ -55,13 +55,13 @@ public class GameFactory {
     return Target.getTargets().get(position);
   }
   
-  private Map<Color, Position> createRobotsToPositions() {
-    Map<Color, Position> map = new HashMap<>();
-    map.put(Color.Blue, Position.of(0, 0));
-    map.put(Color.Red, Position.of(0, (MAX_Y - 1)));
-    map.put(Color.Green, Position.of((MAX_X - 1), 0));
-    map.put(Color.Yellow, Position.of((MAX_X - 1), (MAX_Y - 1)));
-    return map;
+  private List<Position> createRobotsToPositions() {
+    List<Position> list = BoardState.createEmptyPositionList();
+    list.set(Color.Blue.ordinal(), Position.of(0, 0));
+    list.set(Color.Red.ordinal(), Position.of(0, (MAX_Y - 1)));
+    list.set(Color.Green.ordinal(), Position.of((MAX_X - 1), 0));
+    list.set(Color.Yellow.ordinal(), Position.of((MAX_X - 1), (MAX_Y - 1)));
+    return list;
   }
 
 }
