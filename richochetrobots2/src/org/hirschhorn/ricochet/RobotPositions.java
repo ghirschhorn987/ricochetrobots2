@@ -1,23 +1,23 @@
 package org.hirschhorn.ricochet;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.util.ArrayList;
+import java.util.List;
 
 public class RobotPositions {
 
-  private Map<Color, Position> positions;
-  // private List<Position> positions;
+  //private Map<Color, Position> positions;
+   private List<Position> positions;
 
   public static class Builder {
-    private Map<Color, Position> positions;
-    // private List<Position> positions;
+    //private Map<Color, Position> positions;
+     private List<Position> positions;
 
     public Builder() {
-      positions = new HashMap<>();
-      // positions = new ArrayList<>();
-      // for (int i = 0; i < Color.values().length; i++) {
-      // positions.add(null);
-      // }
+      //positions = new HashMap<>();
+       positions = new ArrayList<>();
+       for (int i = 0; i < Color.values().length; i++) {
+       positions.add(null);
+       }
     }
 
     public Builder(RobotPositions robotPositions) {
@@ -28,8 +28,8 @@ public class RobotPositions {
     }
 
     public Builder setRobotPosition(Color robot, Position position) {
-      positions.put(robot, position);
-      // positions.set(indexOfColor(robot), position);
+      //positions.put(robot, position);
+       positions.set(indexOfColor(robot), position);
       return this;
     }
 
@@ -38,31 +38,31 @@ public class RobotPositions {
     }
 
     public Position getRobotPosition(Color robot) {
-      return positions.get(robot);
-      // return positions.get(indexOfColor(robot));
+      //return positions.get(robot);
+       return positions.get(indexOfColor(robot));
     }
   }
 
-  private RobotPositions(Map<Color, Position> positions) {
-    // private RobotPositions(List<Position> positions) {
+  //private RobotPositions(Map<Color, Position> positions) {
+     private RobotPositions(List<Position> positions) {
 
-    // while (positions.size() < Color.values().length) {
-    // positions.add(null);
-    // }
+     while (positions.size() < Color.values().length) {
+     positions.add(null);
+     }
 
     for (Color color : Color.values()) {
-      Position position = positions.get(color);
-      // Position position = positions.get(indexOfColor(color));
+      //Position position = positions.get(color);
+       Position position = positions.get(indexOfColor(color));
       if (position == null) {
         // throw new IllegalArgumentException("Cannot create RobotPositions
         // because not all positions are specified: " + positions);
-        positions.put(color, Position.of(-1, -1));
-        // positions.set(index, Position.of(-1, -1));
+        //positions.put(color, Position.of(-1, -1));
+         positions.set(indexOfColor(color), Position.of(-1, -1));
       }
     }
 
-    this.positions = new HashMap<>(positions);
-    // this.positions = new ArrayList<>(positions);
+    //this.positions = new HashMap<>(positions);
+     this.positions = new ArrayList<>(positions);
   }
 
   // Makes a copy of RobotPositions
@@ -105,8 +105,8 @@ public class RobotPositions {
   }
 
   public Position getRobotPosition(Color robot) {
-    return positions.get(robot);
-    // return positions.get(indexOfColor(robot));
+    //return positions.get(robot);
+     return positions.get(indexOfColor(robot));
   }
 
   public String toString() {

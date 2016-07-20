@@ -1,0 +1,102 @@
+package org.hirschhorn.ricochet;
+
+import java.util.List;
+import java.util.logging.Logger;
+
+public class MoveStats {
+
+  private static Logger logger = Logger.getLogger(MoveStats.class.getName());
+
+  long startMillis;
+  int maxDepth;
+  int mostRecentDepth;
+  
+  /** All theoretically possible moves (based on depth) */
+  long maxPossibleMoves;
+  
+  /** Current remaining possible moves (based on depth and removing moves for paths that won't be followed).
+   *  Does not include moves that will never be created, nor nodes in unprocessed, alive, or dead states.*/
+  long remainingPossibleMoves;
+  
+  /** Moves that were built and added to tree, but have not yet been "processed" -- i.e. children added). */
+  long unprocessedMoves;
+  
+  /** Moves that have been processed and have either at least one unprocessed child, or (recursively) one alive child */
+  long aliveMoves;
+  
+  /** Moves that have been processed and have no alive children. Note that some moves are eliminated before they become dead moves */
+  long deadMoves;
+  
+  public MoveStats(int maxDepth) {
+    startMillis = System.currentTimeMillis();
+    
+    this.maxDepth = maxDepth;
+    
+    maxPossibleMoves = 0;
+    for (int depth = 1; depth <= maxDepth; depth++) {
+      maxPossibleMoves += Math.pow(16, depth);
+    }
+    remainingPossibleMoves = maxPossibleMoves;
+  }
+  
+  
+  public MoveStats moveProcessed(Move parentMove, List<Move> childMovesCreated) {
+    // Root move is not really a Move -- it is just a placeholder for the initial boardState. We don't incremente unprocessed
+    // moves when we create it, so don't decrement when processed.
+    if (parentMove.isRoot()) {
+      unprocessedMoves--;
+    }
+    
+    if (!childMovesCreated.isEmpty()) {
+      aliveMoves++;
+      unprocessedMoves += childMovesCreated.size();
+    } else {
+      deadMoves++;
+      
+      //TODO: Now that this Move is dead, check if each of its ancestor Moves can be moved from alive to dead as well. This
+      //      probably requires keeping a Map of Move to current state, which we are planning on adding anyway.
+    }
+    
+    if (parentMove.getDepth() < maxDepth) {
+      int childMovesNotCreated = 16 - childMovesCreated.size();
+      if (childMovesNotCreated > 0) {
+        long futureMovesNoLongerPossibleAtEachDepth = childMovesNotCreated;
+        long totalFutureMovesNoLongerPossible = futureMovesNoLongerPossibleAtEachDepth;
+        for (int depth = parentMove.getDepth() + 2; depth <= maxDepth; depth++) {
+          // TODO: Is this correct?
+          futureMovesNoLongerPossibleAtEachDepth *= 16;
+          totalFutureMovesNoLongerPossible += futureMovesNoLongerPossibleAtEachDepth;
+        }
+        remainingPossibleMoves -= totalFutureMovesNoLongerPossible;
+      }
+    }
+
+    long processedMoves = aliveMoves + deadMoves;
+    
+    if (parentMove.getDepth() != mostRecentDepth) {
+      logger.fine("" + parentMove);
+      logger.info("Depth: " + parentMove.getDepth());
+      mostRecentDepth = parentMove.getDepth();
+    }
+    
+    if (processedMoves % 10000 == 0) {
+      long elapsedMillis = System.currentTimeMillis() - startMillis;
+//      logger.info("Depth: " + parentMove.getDepth() + " MovesProcessed: " + processedMoves + " ElapsedSeconds: "
+//              + (elapsedMillis / 1000) + " Move: " + parentMove);
+      logger.info(String.format("%d seconds. Depth: %d. %s", (elapsedMillis / 1000), parentMove.getDepth(), toString()));
+    }
+    
+    return this;
+  }  
+  
+  public String toString() {
+    return String.format("%f percentComplete, %d remaining,  %d unprocessed, %d alive, %d dead, %d maxPossible", 
+            ((maxPossibleMoves - remainingPossibleMoves) / (float)maxPossibleMoves),
+            remainingPossibleMoves,
+            unprocessedMoves,
+            aliveMoves, 
+            deadMoves,
+            maxPossibleMoves);
+  }
+  
+}

@@ -127,6 +127,10 @@ public Move(Move parent, BoardState boardState, MoveAction moveAction) {
 		}
 	};
   }
+
+  public boolean isRoot() {
+    return depth == 0;
+  }
   
   
 }
