@@ -141,30 +141,67 @@ public class RobotPositions {
     return positions.equals(((RobotPositions)obj).positions);
   }
 
-  // TODO: NEED TO FIX THIS. INT HAS RANGE OF MINUS 2 BILLION TO 2 BILLION, BUT
-  // THIS METHOD PRODUCES VALUES FROM ZERO TO FOUR BILLION
   public static int compressRobotPositions(RobotPositions expandedPositions) {
-    int compressedPositions = 0;
-    for (int i = 0; i < expandedPositions.size(); i++) {
-      Position position = expandedPositions.getRobotPosition(colorOfIndex(i));
-      int iOfX = i * 2;
-      int iOfY = iOfX + 1;
-      compressedPositions += (position.getX() * Math.pow(16, iOfX));
-      compressedPositions += (position.getY() * Math.pow(16, iOfY));
+    int compressed = 0;
+    
+    Position position = expandedPositions.getRobotPosition(colorOfIndex(0));
+    compressed = (compressed * 16) + position.getX();
+    compressed = (compressed * 16) + position.getY();
+
+    position = expandedPositions.getRobotPosition(colorOfIndex(1));
+    compressed = (compressed * 16) + position.getX();
+    compressed = (compressed * 16) + position.getY();
+    
+    position = expandedPositions.getRobotPosition(colorOfIndex(2));
+    compressed = (compressed * 16) + position.getX();
+    compressed = (compressed * 16) + position.getY();
+
+    position = expandedPositions.getRobotPosition(colorOfIndex(3));
+    compressed = (compressed * 16) + position.getX();
+    if (position.getY() <= 7) {
+      compressed = (compressed * 8) + position.getY();      
+    } else {
+      compressed = (compressed * 8) + (position.getY() - 8);
+      compressed = compressed - Integer.MAX_VALUE - 1;
     }
-    return compressedPositions;
+    
+    return compressed;
   }
 
-  // TODO(): NEED TO FIX THIS. SEE COMMENT IN compressRobotToPosition()
   public static RobotPositions expandRobotPositions(int compressedPositions) {
     RobotPositions.Builder expandedPositions = new RobotPositions.Builder();
-    for (int i = 0; i < Color.values().length; i++) {
-      int xValue = compressedPositions % 16;
-      compressedPositions /= 16;
-      int yValue = compressedPositions % 16;
-      compressedPositions /= 16;
-      expandedPositions.setRobotPosition(colorOfIndex(i), Position.of(xValue, yValue));
+
+    int y = 0;
+    if (compressedPositions < 0) {
+      compressedPositions = compressedPositions + 1 + Integer.MAX_VALUE;
+      y = (compressedPositions % 8) + 8;
+      compressedPositions /= 8;
+    } else {
+      y = compressedPositions % 8;
+      compressedPositions /= 8;
     }
+    int x = compressedPositions % 16;
+    compressedPositions /= 16;
+    expandedPositions.setRobotPosition(colorOfIndex(3), Position.of(x, y));
+    
+    y = compressedPositions % 16;
+    compressedPositions /= 16;
+    x = compressedPositions % 16;
+    compressedPositions /= 16;
+    expandedPositions.setRobotPosition(colorOfIndex(2), Position.of(x, y));
+
+    y = compressedPositions % 16;
+    compressedPositions /= 16;
+    x = compressedPositions % 16;
+    compressedPositions /= 16;
+    expandedPositions.setRobotPosition(colorOfIndex(1), Position.of(x, y));
+
+    y = compressedPositions % 16;
+    compressedPositions /= 16;
+    x = compressedPositions % 16;
+    compressedPositions /= 16;
+    expandedPositions.setRobotPosition(colorOfIndex(0), Position.of(x, y));
+
     return expandedPositions.build();
   }
 

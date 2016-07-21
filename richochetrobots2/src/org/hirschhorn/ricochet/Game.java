@@ -1,28 +1,33 @@
 package org.hirschhorn.ricochet;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Set;
 import java.util.logging.Logger;
 
 public class Game {
 
-  private static final int MAX_DEPTH = 7;
-  private static final int MAX_WINNER_SIZE = 1;
+  private static final int MAX_DEPTH = 3;
+  private static final int MAX_WINNERS = 1;
 
   private static Logger logger = Logger.getLogger(Game.class.getName());
   private Move rootMove;
   private Board board;
   private MoveStats moveStats;
+  private Set<Integer> boardStateCache;
 
   public static void main(String[] args) {
 
     GameFactory gameFactory = new GameFactory();
     UnprocessedMoves unprocessedMoves = UnprocessedMovesFactory.newBreadthFirstUnprocessedMoves();
-    // UnprocessedMoves unprocessedMoves =
-    // UnprocessedMovesFactory.newPriorityQueueUnprocessedMoves();
+    //UnprocessedMoves unprocessedMoves = UnprocessedMovesFactory.newPriorityQueueUnprocessedMoves();
 
-    for (int iteration = 1; iteration <= 1; iteration++) {
+    for (int iteration = 0; iteration <= 15; iteration++) {
+      logger.info("");
+      logger.info("======================================");
+      logger.info("NEW GAME. Iteration " + iteration);
       logger.info("======================================");
       Game game = gameFactory.createGame(iteration);
       unprocessedMoves.clear();
@@ -34,7 +39,8 @@ public class Game {
     this.board = board;
     this.rootMove = rootMove;
 
-    moveStats = new MoveStats(MAX_DEPTH);
+    moveStats = new MoveStats(MAX_DEPTH, MAX_WINNERS);
+    boardStateCache = new HashSet<>();
   }
 
   Move getRootMove() {
@@ -46,8 +52,6 @@ public class Game {
   }
 
   private void play(UnprocessedMoves unprocessedMoves) {
-    List<Move> winners = new ArrayList<>();
-
     logger.info("Target: " + rootMove.getBoardState().getChosenTarget() + " at position "
             + board.getTargetPosition(rootMove.getBoardState().getChosenTarget()));
 
@@ -61,8 +65,10 @@ public class Game {
       while (moveIter.hasNext()) {
         Move nextMove = moveIter.next();
         if (isWinner(nextMove)) {
-          winners.add(nextMove);
+          moveStats.winnerFound(nextMove);
         } else if (shouldContinue(nextMove)) {
+          int compressedMove = RobotPositions.compressRobotPositions(nextMove.getBoardState().getRobotPositions());
+          boardStateCache.add(compressedMove);
           nextMove.getPotential().adjustIfMoveSameColorAsTarget(nextMove);
           unprocessedMoves.add(nextMove);
         } else {
@@ -73,15 +79,14 @@ public class Game {
 
       move.addChildren(nextMoves);
       moveStats.moveProcessed(move, nextMoves);
-      
-      
-      if (winners.size() >= MAX_WINNER_SIZE) {
+        
+      if (moveStats.maxWinnersReached()) {
         unprocessedMoves.clear();
       }
 
     }
-
-    printMoves(winners);
+    
+    moveStats.printWinners();
   }
 
   private boolean shouldContinue(Move nextMove) {
@@ -89,37 +94,23 @@ public class Game {
       return false;
     }
     //TODO: FIX THIS -- commented out for testing
-    //    if (noRobotsHaveMoved(nextMove)) {
-    //      return false;
-    //    }
-    // if (boardStateHasPreviouslyExisted(nextMove)) {
-    // return false;
-    // }
-    // if(nextMove.getParent() != null
-    // &&
-    // nextMove.getParent().getBoardState().getRobotPosition(nextMove.getMove().getRobot()).equals(Position.of(0,
-    // 0))){
-    // return true;
-    // }
-    // if (!nextMove.getMove().getRobot().equals(Color.Red)) {
-    // return false;
-    // }
+    if (noRobotsHaveMoved(nextMove)) {
+       return false;
+    }
+    if (boardStateHasPreviouslyExisted(nextMove)) {
+      return false;
+    }
     return true;
   }
 
+  
   private boolean boardStateHasPreviouslyExisted(Move move) {
-    // TODO: Need to implement
-    return false;
+    int compressedMove = RobotPositions.compressRobotPositions(move.getBoardState().getRobotPositions());
+    return boardStateCache.contains(compressedMove);
   }
 
   private boolean noRobotsHaveMoved(Move move) {
     return move.getMoveAction().getNumberOfSpaces() == 0;
-  }
-
-  private void printMoves(List<Move> moves) {
-    for (Move move : moves) {
-      logger.info(move.asMovesString());
-    }
   }
 
   private boolean isWinner(Move nextMove) {

@@ -1,55 +1,65 @@
 package org.hirschhorn.ricochet;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Logger;
 
 public class MoveStats {
 
+  private static final long PRINT_MOVE_STATS_FREQUENCY = 1000;
+
   private static Logger logger = Logger.getLogger(MoveStats.class.getName());
 
-  long startMillis;
-  int maxDepth;
-  int mostRecentDepth;
+  private long startMillis;
+  
+  private int maxDepth;
+  private int mostRecentDepth;
+  
+  private int maxWinners;
+  private List<Move> winners;
   
   /** All theoretically possible moves (based on depth) */
-  long maxPossibleMoves;
+  private long maxPossibleMoves;
   
   /** Current remaining possible moves (based on depth and removing moves for paths that won't be followed).
    *  Does not include moves that will never be created, nor nodes in unprocessed, alive, or dead states.*/
-  long remainingPossibleMoves;
+  private long remainingPossibleMoves;
   
   /** Moves that were built and added to tree, but have not yet been "processed" -- i.e. children added). */
-  long unprocessedMoves;
+  private long unprocessedMoves;
   
   /** Moves that have been processed and have either at least one unprocessed child, or (recursively) one alive child */
-  long aliveMoves;
+  private long aliveMoves;
   
   /** Moves that have been processed and have no alive children. Note that some moves are eliminated before they become dead moves */
-  long deadMoves;
+  private long deadMoves;
   
-  public MoveStats(int maxDepth) {
-    startMillis = System.currentTimeMillis();
-    
+  public MoveStats(int maxDepth, int maxWinners) {    
     this.maxDepth = maxDepth;
+    this.maxWinners = maxWinners;
     
+    winners = new ArrayList<>();
+
     maxPossibleMoves = 0;
     for (int depth = 1; depth <= maxDepth; depth++) {
       maxPossibleMoves += Math.pow(16, depth);
     }
     remainingPossibleMoves = maxPossibleMoves;
+    
+    startMillis = System.currentTimeMillis();
   }
-  
   
   public MoveStats moveProcessed(Move parentMove, List<Move> childMovesCreated) {
     // Root move is not really a Move -- it is just a placeholder for the initial boardState. We don't incremente unprocessed
     // moves when we create it, so don't decrement when processed.
-    if (parentMove.isRoot()) {
+    if (!parentMove.isRoot()) {
       unprocessedMoves--;
     }
     
     if (!childMovesCreated.isEmpty()) {
       aliveMoves++;
       unprocessedMoves += childMovesCreated.size();
+      remainingPossibleMoves -= childMovesCreated.size();
     } else {
       deadMoves++;
       
@@ -79,24 +89,56 @@ public class MoveStats {
       mostRecentDepth = parentMove.getDepth();
     }
     
-    if (processedMoves % 10000 == 0) {
-      long elapsedMillis = System.currentTimeMillis() - startMillis;
-//      logger.info("Depth: " + parentMove.getDepth() + " MovesProcessed: " + processedMoves + " ElapsedSeconds: "
-//              + (elapsedMillis / 1000) + " Move: " + parentMove);
-      logger.info(String.format("%d seconds. Depth: %d. %s", (elapsedMillis / 1000), parentMove.getDepth(), toString()));
+    if (processedMoves % PRINT_MOVE_STATS_FREQUENCY == 0) {
+      printStats(parentMove.getDepth());
     }
     
     return this;
-  }  
+  }
+  
+  public void printStats(int depth) {
+    long elapsedMillis = System.currentTimeMillis() - startMillis;
+    //logger.info("Depth: " + parentMove.getDepth() + " MovesProcessed: " + processedMoves + " ElapsedSeconds: "
+    //     + (elapsedMillis / 1000) + " Move: " + parentMove);
+    logger.info(String.format("%d seconds. Depth: %d. %s", (elapsedMillis / 1000), depth, toString()));
+  }
+  
   
   public String toString() {
-    return String.format("%f percentComplete, %d remaining,  %d unprocessed, %d alive, %d dead, %d maxPossible", 
-            ((maxPossibleMoves - remainingPossibleMoves) / (float)maxPossibleMoves),
+    return String.format("%.2f %% complete, %d remaining,  %d unprocessed, %d alive, %d dead, %d maxPossible", 
+            ((maxPossibleMoves - remainingPossibleMoves) / (float)maxPossibleMoves) * 100,
             remainingPossibleMoves,
             unprocessedMoves,
             aliveMoves, 
             deadMoves,
             maxPossibleMoves);
   }
+
+  public void winnerFound(Move nextMove) {
+    winners.add(nextMove);
+    logger.info("FOUND A WINNER AT DEPTH " + nextMove.getDepth());
+  }
+
+  public boolean maxWinnersReached() {
+    return winners.size() >= maxWinners;
+  }
+
+  public void printWinners() {
+    logger.info("====================");
+    logger.info(winners.size() + " WINNERS");
+    logger.info("====================");
+    printMoves(winners);    
+  }
   
+
+  private void printMove(Move move) {
+    logger.info(move.asMovesString());    
+  }
+  
+  private void printMoves(List<Move> moves) {
+    for (Move move : moves) {
+      printMove(move);
+    }
+  }  
+
 }
