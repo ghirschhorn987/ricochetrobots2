@@ -33,5 +33,7 @@ public class MoveTest {
     String expected = "Red(0,1) Green(7,0) Blue(0,0) Yellow(7,7).  Move 1: Red East to (7,1) --> Move 2: Blue South to (0,7) --> Move 3: Blue North to (0,0)";
     assertEquals(expected, move.toString());
   }
+  
+  
 
 }

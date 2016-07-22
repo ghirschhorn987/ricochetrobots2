@@ -11,8 +11,17 @@ public class GameFactory {
   public static final int MAX_X = 16;
   
   public Game createGame(int iteration) {
+    return createGame(iteration, null);
+  }
+
+  public Game createGame(int iteration, RobotPositions robotPositions) {
     Board board = new Board(createTargetsToPositions(), createBoardItems());
-    Move rootMove = new Move(null, createInitialBoardState(iteration), null);
+    
+    if (robotPositions == null) {
+      robotPositions = createRobotsToPositions();
+    }
+    
+    Move rootMove = new Move(null, createInitialBoardState(iteration, robotPositions), null);
     Game game = new Game(board, rootMove);
     return game;
   }
@@ -47,8 +56,8 @@ public class GameFactory {
     return boardItems;
   }
   
-  private BoardState createInitialBoardState(int iteration) {
-    return new BoardState(chooseTarget(iteration), createRobotsToPositions());
+  private BoardState createInitialBoardState(int iteration, RobotPositions robotPositions) {
+    return new BoardState(chooseTarget(iteration), robotPositions);
   }
 
   private Target chooseTarget(int position) {

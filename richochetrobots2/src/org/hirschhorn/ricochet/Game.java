@@ -1,5 +1,6 @@
 package org.hirschhorn.ricochet;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -9,7 +10,8 @@ import java.util.logging.Logger;
 
 public class Game {
 
-  private static final int MAX_DEPTH = 3;
+  private static final int NUMBER_OF_ITERATIONS = 1000;
+  private static final int MAX_DEPTH = 15;
   private static final int MAX_WINNERS = 1;
 
   private static Logger logger = Logger.getLogger(Game.class.getName());
@@ -18,20 +20,24 @@ public class Game {
   private MoveStats moveStats;
   private Set<Integer> boardStateCache;
 
-  public static void main(String[] args) {
+  public static void main(String[] args) throws IOException {
 
     GameFactory gameFactory = new GameFactory();
     UnprocessedMoves unprocessedMoves = UnprocessedMovesFactory.newBreadthFirstUnprocessedMoves();
     //UnprocessedMoves unprocessedMoves = UnprocessedMovesFactory.newPriorityQueueUnprocessedMoves();
-
-    for (int iteration = 0; iteration <= 15; iteration++) {
+    
+    Move previousWinner = null;
+    for (int iteration = 0; iteration <= NUMBER_OF_ITERATIONS; iteration++) {
       logger.info("");
+      logger.severe("======================================");
+      logger.severe("NEW GAME. Iteration " + iteration);  
       logger.info("======================================");
-      logger.info("NEW GAME. Iteration " + iteration);
-      logger.info("======================================");
-      Game game = gameFactory.createGame(iteration);
+      RobotPositions robotPositions = (previousWinner == null) ? null : previousWinner.getBoardState().getRobotPositions();
+      Game game = gameFactory.createGame(iteration % 16, robotPositions);
       unprocessedMoves.clear();
-      game.play(unprocessedMoves);
+
+      List<Move> winners = game.play(unprocessedMoves);
+      //previousWinner = winners.get(0);
     }
   }
 
@@ -51,9 +57,14 @@ public class Game {
     return board;
   }
 
-  private void play(UnprocessedMoves unprocessedMoves) {
-    logger.info("Target: " + rootMove.getBoardState().getChosenTarget() + " at position "
-            + board.getTargetPosition(rootMove.getBoardState().getChosenTarget()));
+  private List<Move> play(UnprocessedMoves unprocessedMoves) throws IOException {
+    logger.severe("Target: " + rootMove.getBoardState().getChosenTarget() + " at position "
+            + board.getTargetPosition(rootMove.getBoardState().getChosenTarget())
+            + ". Robots: " + rootMove.getBoardState().asRobotPositionsString());
+    
+    logger.severe("Press a key to start.");
+    System.in.read();
+    logger.severe("Running...");
 
     unprocessedMoves.add(rootMove);
 
@@ -85,8 +96,8 @@ public class Game {
       }
 
     }
-    
     moveStats.printWinners();
+    return moveStats.getWinners();
   }
 
   private boolean shouldContinue(Move nextMove) {
@@ -138,17 +149,19 @@ public class Game {
     Position robotPosition = robotPositionsBuilder.getRobotPosition(robot);
     boolean hitObject = false;
     while (!hitObject) {
-      Position potentialPosition = getAdjacentPosition(robotPosition, direction);
-      if (hasRobot(potentialPosition, robotPositionsBuilder)) {
-        hitObject = true;
-      } else if (board.hasWall(robotPosition, direction)) {
+      if (board.hasWall(robotPosition, direction)) {
         hitObject = true;
       } else {
-        robotPosition = potentialPosition;
-        numberOfSpaces++;
-        // Is this really needed? If this is only robot moving, do we need to
-        // update positions? Won't collide withself.
-        robotPositionsBuilder.setRobotPosition(robot, robotPosition);
+        Position potentialPosition = getAdjacentPosition(robotPosition, direction);
+        if (hasRobot(potentialPosition, robotPositionsBuilder)) {
+          hitObject = true;
+        } else {
+          robotPosition = potentialPosition;
+          numberOfSpaces++;
+          // Is this really needed? If this is only robot moving, do we need to
+          // update positions? Won't collide with self.
+          robotPositionsBuilder.setRobotPosition(robot, robotPosition);
+        }
       }
     }
 

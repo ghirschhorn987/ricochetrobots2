@@ -49,6 +49,10 @@ public class MoveStats {
     startMillis = System.currentTimeMillis();
   }
   
+  public List<Move> getWinners() {
+    return winners;
+  }
+  
   public MoveStats moveProcessed(Move parentMove, List<Move> childMovesCreated) {
     // Root move is not really a Move -- it is just a placeholder for the initial boardState. We don't incremente unprocessed
     // moves when we create it, so don't decrement when processed.
@@ -116,7 +120,7 @@ public class MoveStats {
 
   public void winnerFound(Move nextMove) {
     winners.add(nextMove);
-    logger.info("FOUND A WINNER AT DEPTH " + nextMove.getDepth());
+    logger.severe("FOUND A WINNER AT DEPTH " + nextMove.getDepth() + ". colors: " + nextMove.numberOfColorsInPath() + ".  " + nextMove.toString());
   }
 
   public boolean maxWinnersReached() {

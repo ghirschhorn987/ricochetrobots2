@@ -63,5 +63,20 @@ public class GameTest {
     assertEquals(expectedMove.toString(), actualMove.toString());
   }
   
+  @Test 
+  public void createChildMoveShouldCreateChildMove2() {
+    Target target = Target.getTarget(Color.Red, Shape.Moon);
+    RobotPositions.Builder robotPositions = new RobotPositions.Builder();
+    robotPositions.setRobotPosition(Color.Red, Position.of(3, 7));
+    BoardState boardState = new BoardState(target, robotPositions.build());
+    
+    Game game = (new GameFactory()).createGame(0);
+    Move rootMove = new Move(null, boardState, null);
+    Move actualMove = game.createChildMove(rootMove, Color.Red, Direction.North);
+    MoveAction expectedMoveAction = new MoveAction(Color.Red, Direction.North, 2);
+    Move expectedMove = new Move(rootMove, boardState, expectedMoveAction);
+    assertEquals(expectedMove.toString(), actualMove.toString());   
+  }
+  
 }
  

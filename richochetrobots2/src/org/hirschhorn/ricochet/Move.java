@@ -3,6 +3,7 @@ package org.hirschhorn.ricochet;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.EnumSet;
 import java.util.List;
 
 public class Move {
@@ -132,5 +133,13 @@ public Move(Move parent, BoardState boardState, MoveAction moveAction) {
     return depth == 0;
   }
   
-  
+  public int numberOfColorsInPath() {
+    EnumSet<Color> colors = EnumSet.noneOf(Color.class);
+    for (Move move : getAncestorsFromRootDownToSelf()) {
+      if (!move.isRoot()) {
+        colors.add(move.getMoveAction().getRobot());
+      }
+    }
+    return colors.size();
+  }
 }

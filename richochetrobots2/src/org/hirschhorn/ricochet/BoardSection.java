@@ -42,7 +42,7 @@ public class BoardSection {
     get(2,6,boardItems).setEastWall(true);
     get(3,1,boardItems).setEastWall(true);
     get(3,6,boardItems).setWestWall(true).setSouthWall(true);
-    get(3,7,boardItems).setEastWall(true);
+    get(3,7,boardItems).setNorthWall(true);
     get(4,0,boardItems).setSouthWall(true);
     get(4,1,boardItems).setEastWall(true).setNorthWall(true);
     get(6,3,boardItems).setSouthWall(true).setEastWall(true);
