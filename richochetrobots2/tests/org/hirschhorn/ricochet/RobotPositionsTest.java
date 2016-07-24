@@ -56,29 +56,29 @@ public class RobotPositionsTest {
   
   @Test
 	public void testCompressThenExpandIsUnchanged() { 
-    assetCompressThenExpandIsUnchanged(ALL_MIN);
-    assetCompressThenExpandIsUnchanged(ALL_SEVENS);
-    assetCompressThenExpandIsUnchanged(ALL_EIGHTS);
-    assetCompressThenExpandIsUnchanged(ALL_MAX);
-    assetCompressThenExpandIsUnchanged(ALL_MIN_FIRST_SEVEN);
-    assetCompressThenExpandIsUnchanged(ALL_MIN_FIRST_EIGHT);
-    assetCompressThenExpandIsUnchanged(ALL_MIN_FIRST_MAX);
-    assetCompressThenExpandIsUnchanged(ALL_MIN_LAST_SEVEN);
-    assetCompressThenExpandIsUnchanged(ALL_MIN_LAST_EIGHT);
-    assetCompressThenExpandIsUnchanged(ALL_MIN_LAST_MAX);
-    assetCompressThenExpandIsUnchanged(ALL_MAX_FIRST_MIN);
-    assetCompressThenExpandIsUnchanged(ALL_MAX_FIRST_SEVEN);
-    assetCompressThenExpandIsUnchanged(ALL_MAX_FIRST_EIGHT);
-    assetCompressThenExpandIsUnchanged(ALL_MAX_LAST_MIN);
-    assetCompressThenExpandIsUnchanged(ALL_MAX_LAST_SEVEN);
-    assetCompressThenExpandIsUnchanged(ALL_MAX_LAST_EIGHT);
-    assetCompressThenExpandIsUnchanged(MIN_TO_SEVEN);
-    assetCompressThenExpandIsUnchanged(ONE_TO_EIGHT);
-    assetCompressThenExpandIsUnchanged(SEVEN_TO_MIN);
-    assetCompressThenExpandIsUnchanged(EIGHT_TO_ONE);
+    assertCompressThenExpandIsUnchanged(ALL_MIN);
+    assertCompressThenExpandIsUnchanged(ALL_SEVENS);
+    assertCompressThenExpandIsUnchanged(ALL_EIGHTS);
+    assertCompressThenExpandIsUnchanged(ALL_MAX);
+    assertCompressThenExpandIsUnchanged(ALL_MIN_FIRST_SEVEN);
+    assertCompressThenExpandIsUnchanged(ALL_MIN_FIRST_EIGHT);
+    assertCompressThenExpandIsUnchanged(ALL_MIN_FIRST_MAX);
+    assertCompressThenExpandIsUnchanged(ALL_MIN_LAST_SEVEN);
+    assertCompressThenExpandIsUnchanged(ALL_MIN_LAST_EIGHT);
+    assertCompressThenExpandIsUnchanged(ALL_MIN_LAST_MAX);
+    assertCompressThenExpandIsUnchanged(ALL_MAX_FIRST_MIN);
+    assertCompressThenExpandIsUnchanged(ALL_MAX_FIRST_SEVEN);
+    assertCompressThenExpandIsUnchanged(ALL_MAX_FIRST_EIGHT);
+    assertCompressThenExpandIsUnchanged(ALL_MAX_LAST_MIN);
+    assertCompressThenExpandIsUnchanged(ALL_MAX_LAST_SEVEN);
+    assertCompressThenExpandIsUnchanged(ALL_MAX_LAST_EIGHT);
+    assertCompressThenExpandIsUnchanged(MIN_TO_SEVEN);
+    assertCompressThenExpandIsUnchanged(ONE_TO_EIGHT);
+    assertCompressThenExpandIsUnchanged(SEVEN_TO_MIN);
+    assertCompressThenExpandIsUnchanged(EIGHT_TO_ONE);
 	}
 
-  private void assetCompressThenExpandIsUnchanged(int[] intArray) {
+  private void assertCompressThenExpandIsUnchanged(int[] intArray) {
     RobotPositions original = buildRobotPositionsFromIntArray(intArray);
     int compressed = RobotPositions.compressRobotPositions(original);
     RobotPositions expanded = RobotPositions.expandRobotPositions(compressed);

@@ -10,7 +10,9 @@ import java.util.logging.Logger;
 
 public class Game {
 
-  private static final int NUMBER_OF_ITERATIONS = 1000;
+  private static final int NUMBER_OF_ITERATIONS = 200;
+  private static final int START_ITERATION = 0;
+  private static final boolean PAUSE_BEFORE_PLAY = false;
   private static final int MAX_DEPTH = 15;
   private static final int MAX_WINNERS = 1;
 
@@ -27,7 +29,7 @@ public class Game {
     //UnprocessedMoves unprocessedMoves = UnprocessedMovesFactory.newPriorityQueueUnprocessedMoves();
     
     Move previousWinner = null;
-    for (int iteration = 0; iteration <= NUMBER_OF_ITERATIONS; iteration++) {
+    for (int iteration = START_ITERATION; iteration <= NUMBER_OF_ITERATIONS; iteration++) {
       logger.info("");
       logger.severe("======================================");
       logger.severe("NEW GAME. Iteration " + iteration);  
@@ -37,7 +39,7 @@ public class Game {
       unprocessedMoves.clear();
 
       List<Move> winners = game.play(unprocessedMoves);
-      //previousWinner = winners.get(0);
+      previousWinner = winners.get(0);
     }
   }
 
@@ -62,9 +64,11 @@ public class Game {
             + board.getTargetPosition(rootMove.getBoardState().getChosenTarget())
             + ". Robots: " + rootMove.getBoardState().asRobotPositionsString());
     
-    logger.severe("Press a key to start.");
-    System.in.read();
-    logger.severe("Running...");
+    if (PAUSE_BEFORE_PLAY) {
+      logger.severe("Press a key to start.");
+      System.in.read();
+      logger.severe("Running...");
+    }
 
     unprocessedMoves.add(rootMove);
 
@@ -131,7 +135,8 @@ public class Game {
     return boardState.getRobotPosition(targetColor).equals(board.getTargetPosition(chosenTarget));
   }
 
-  private List<Move> createNextMoves(Move parentMove) {
+  //@VisibleForTesting
+  List<Move> createNextMoves(Move parentMove) {
     List<Move> nextMoves = new ArrayList<>();
     for (Color color : Color.values()) {
       for (Direction direction : Direction.values()) {

@@ -54,7 +54,7 @@ public class BoardSection {
     
     Map<Target, Position> targetsToPosition = new HashMap<>();
     targetsToPosition.put(Target.getTarget(Color.Green, Shape.Sawblade), Position.of(1, 2));
-    targetsToPosition.put(Target.getTarget(Color.Red, Shape.Moon), Position.of(5, 1));
+    targetsToPosition.put(Target.getTarget(Color.Red, Shape.Moon), Position.of(4, 1));
     targetsToPosition.put(Target.getTarget(Color.Blue, Shape.Planet), Position.of(3, 6));
     targetsToPosition.put(Target.getTarget(Color.Yellow, Shape.Star), Position.of(6, 3));
     return new BoardSection(boardItems, targetsToPosition);

@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.logging.Logger;
 
 import org.hirschhorn.ricochet.BoardState;
 import org.hirschhorn.ricochet.Color;
@@ -19,6 +20,8 @@ import org.junit.Before;
 import org.junit.Test;
 
 public class GameTest {
+  
+  private static Logger logger = Logger.getLogger(GameTest.class.getName());
 
   private Board board;
   
@@ -77,6 +80,64 @@ public class GameTest {
     Move expectedMove = new Move(rootMove, boardState, expectedMoveAction);
     assertEquals(expectedMove.toString(), actualMove.toString());   
   }
+  
+  @Test
+  public void createChildMovesShouldContainCorrectMoves() {
+    Game game = (new GameFactory()).createGame(2);
+    Move rootMove = game.getRootMove();
+    
+    int moveNum = 1;
+    
+    MoveAction expectedMoveAction = new MoveAction(Color.Red, Direction.East, 5);
+    Move nextMove = testNextMoveInChain(game, rootMove, expectedMoveAction, moveNum++);
+    
+    expectedMoveAction = new MoveAction(Color.Red, Direction.North, 6);
+    nextMove = testNextMoveInChain(game, nextMove, expectedMoveAction, moveNum++);
+    
+    expectedMoveAction = new MoveAction(Color.Yellow, Direction.North, 6);
+    nextMove = testNextMoveInChain(game, nextMove, expectedMoveAction, moveNum++);
+    
+    expectedMoveAction = new MoveAction(Color.Red, Direction.East, 9);
+    nextMove = testNextMoveInChain(game, nextMove, expectedMoveAction, moveNum++);
+    
+    expectedMoveAction = new MoveAction(Color.Red, Direction.North, 7);
+    nextMove = testNextMoveInChain(game, nextMove, expectedMoveAction, moveNum++);
+    
+    expectedMoveAction = new MoveAction(Color.Red, Direction.West, 12);
+    nextMove = testNextMoveInChain(game, nextMove, expectedMoveAction, moveNum++);
+    
+    expectedMoveAction = new MoveAction(Color.Red, Direction.South, 6);
+    nextMove = testNextMoveInChain(game, nextMove, expectedMoveAction, moveNum++);
+    
+    expectedMoveAction = new MoveAction(Color.Red, Direction.East, 2);
+    nextMove = testNextMoveInChain(game, nextMove, expectedMoveAction, moveNum++);
+    
+    expectedMoveAction = new MoveAction(Color.Red, Direction.North, 7);
+    nextMove = testNextMoveInChain(game, nextMove, expectedMoveAction, moveNum++);
+    
+  }
+
+  private Move testNextMoveInChain(Game game, Move previousMove, MoveAction expectedMoveAction, int moveNumber) {
+    List<Move> nextMoves = game.createNextMoves(previousMove);
+    Move nextMove = getMatchingMove(nextMoves, expectedMoveAction);
+    if (nextMove == null) {
+      logger.severe("Potential Moves " + nextMoves);
+      fail("NextMoves does not contain expectedMoveAction: " + expectedMoveAction + " at move number " + moveNumber);
+    }
+    return nextMove;
+  }
+  
+  private Move getMatchingMove(List<Move> nextMoves, MoveAction expectedMoveAction) {
+    for (Move move : nextMoves) {
+      MoveAction actualMoveAction = move.getMoveAction();
+      if (actualMoveAction.equals(expectedMoveAction)) {
+        return move;
+      }
+    }
+    return null;
+  }
+  
+  
   
 }
  
