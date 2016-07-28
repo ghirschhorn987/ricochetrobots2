@@ -1,0 +1,10 @@
+#redRobot { 
+  position: absolute;
+  top:8;
+  left:8;
+}
+
+#canvasBoard {
+  display:block; 
+}
+
