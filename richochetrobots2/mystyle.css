@@ -1,10 +1,29 @@
-#redRobot { 
+#board {
   position: absolute;
-  top:8;
-  left:8;
 }
 
 #canvasBoard {
   display:block; 
+  background-color: #ebedec;
 }
 
+.robot { 
+  position: absolute;
+}
+ #redRobot {
+ top: 0;
+ left: 0;
+ }
+ #blueRobot {
+ top: 0;
+ right: 0;
+ }
+  #yellowRobot {
+ top: 600;
+ left: 0;
+ }
+  #greenRobot {
+ top: 600;
+ right: 0;
+ }
+ 

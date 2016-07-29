@@ -3,29 +3,29 @@ package org.hirschhorn.ricochet;
 public class BoardItem {
   
   private Position position;
-  private boolean hasNorthWall;
-  private boolean hasSouthWall;
-  private boolean hasEastWall;
-  private boolean hasWestWall;
+  private boolean northWall;
+  private boolean southWall;
+  private boolean eastWall;
+  private boolean westWall;
 
   public BoardItem(Position position) {
     this.position = position;
   }
 
   public boolean hasNorthWall() {
-    return hasNorthWall;
+    return northWall;
   }
 
   public boolean hasEastWall() {
-    return hasEastWall;
+    return eastWall;
   }
 
   public boolean hasSouthWall() {
-    return hasSouthWall;
+    return southWall;
   }
 
   public boolean hasWestWall() {
-    return hasWestWall;
+    return westWall;
   }
 
   public Position getPosition() {
@@ -33,28 +33,28 @@ public class BoardItem {
   }
 
   public BoardItem setEastWall(boolean b) {
-    hasEastWall = b;
+    eastWall = b;
     return this;
   }
   
   public BoardItem setNorthWall(boolean b) {
-    hasNorthWall = b;
+    northWall = b;
     return this;
   }
   
   public BoardItem setWestWall(boolean b) {
-    hasWestWall = b;
+    westWall = b;
     return this;
   }
   
   public BoardItem setSouthWall(boolean b) {
-    hasSouthWall = b;
+    southWall = b;
     return this;
   }
 
   @Override
   public String toString() {
-    return "BoardItem [position=" + position.asSimpleString() + ", hasNorthWall=" + hasNorthWall + ", hasSouthWall=" + hasSouthWall
-        + ", hasEastWall=" + hasEastWall + ", hasWestWall=" + hasWestWall + "]";
+    return "BoardItem [position=" + position.asSimpleString() + ", northWall=" + northWall + ", southWall=" + southWall
+        + ", eastWall=" + eastWall + ", westWall=" + westWall + "]";
   }  
 }

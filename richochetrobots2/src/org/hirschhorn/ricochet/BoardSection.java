@@ -44,10 +44,10 @@ public class BoardSection {
     get(3,6,boardItems).setWestWall(true).setSouthWall(true);
     get(3,7,boardItems).setNorthWall(true);
     get(4,0,boardItems).setSouthWall(true);
-    get(4,1,boardItems).setEastWall(true).setNorthWall(true);
+    get(4,1,boardItems).setWestWall(true).setNorthWall(true);
     get(6,3,boardItems).setSouthWall(true).setEastWall(true);
     get(6,4,boardItems).setNorthWall(true);
-    get(6,7,boardItems).setWestWall(true);
+    get(6,7,boardItems).setEastWall(true);
     get(7,3,boardItems).setWestWall(true);
     get(7,6,boardItems).setSouthWall(true);
     get(7,7,boardItems).setNorthWall(true).setWestWall(true);
@@ -73,12 +73,12 @@ public class BoardSection {
         boardItems.add(boardItem);
       }
     }
-    get(0,2,boardItems).setEastWall(true);
+    get(0,1,boardItems).setEastWall(true);
     get(0,6,boardItems).setSouthWall(true);
     get(0,7,boardItems).setNorthWall(true).setEastWall(true);
     get(1,1,boardItems).setWestWall(true).setSouthWall(true);
     get(1,2,boardItems).setNorthWall(true);
-    get(1,7,boardItems).setEastWall(true);
+    get(1,7,boardItems).setWestWall(true);
     get(2,0,boardItems).setEastWall(true);
     get(2,4,boardItems).setSouthWall(true).setEastWall(true);
     get(2,5,boardItems).setNorthWall(true);
@@ -121,7 +121,7 @@ public class BoardSection {
     get(1,5,boardItems).setSouthWall(true);
     get(1,6,boardItems).setNorthWall(true).setEastWall(true);
     get(2,3,boardItems).setSouthWall(true).setEastWall(true);
-    get(2,4,boardItems).setSouthWall(true);
+    get(2,4,boardItems).setNorthWall(true);
     get(2,6,boardItems).setWestWall(true);
     get(3,3,boardItems).setWestWall(true);
     get(3,7,boardItems).setEastWall(true);
