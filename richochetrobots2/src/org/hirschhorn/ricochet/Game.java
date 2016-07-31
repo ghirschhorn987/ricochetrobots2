@@ -21,12 +21,12 @@ public class Game {
   private Board board;
   private MoveStats moveStats;
   private Set<Integer> boardStateCache;
+  private UnprocessedMovesType unprocessedMovesType;
 
   public static void main(String[] args) throws IOException {
 
     GameFactory gameFactory = new GameFactory();
-    UnprocessedMoves unprocessedMoves = UnprocessedMovesFactory.newBreadthFirstUnprocessedMoves();
-    //UnprocessedMoves unprocessedMoves = UnprocessedMovesFactory.newPriorityQueueUnprocessedMoves();
+    UnprocessedMovesType movesType = UnprocessedMovesType.BREADTH_FIRST_SEARCH;
     
     Move previousWinner = null;
     for (int iteration = START_ITERATION; iteration <= NUMBER_OF_ITERATIONS; iteration++) {
@@ -35,17 +35,28 @@ public class Game {
       logger.severe("NEW GAME. Iteration " + iteration);  
       logger.info("======================================");
       RobotPositions robotPositions = (previousWinner == null) ? null : previousWinner.getBoardState().getRobotPositions();
-      Game game = gameFactory.createGame(iteration % 16, robotPositions);
-      unprocessedMoves.clear();
-
-      List<Move> winners = game.play(unprocessedMoves);
+      Game game = gameFactory.createGame(iteration % 16, robotPositions, movesType);
+      
+      BoardState boardState = game.getRootMove().getBoardState();
+      logger.severe("Target: " + boardState.getChosenTarget() + " at position "
+              + game.getBoard().getTargetPosition(boardState.getChosenTarget())
+              + ". Robots: " + boardState.asRobotPositionsString());
+      
+      if (PAUSE_BEFORE_PLAY) {
+        logger.severe("Press a key to start.");
+        System.in.read();
+        logger.severe("Running...");
+      }
+      
+      List<Move> winners = game.play();
       previousWinner = winners.get(0);
     }
   }
 
-  public Game(Board board, Move rootMove) {
+  public Game(Board board, Move rootMove, UnprocessedMovesType unprocessedMovesType) {
     this.board = board;
     this.rootMove = rootMove;
+    this.unprocessedMovesType = unprocessedMovesType;
 
     moveStats = new MoveStats(MAX_DEPTH, MAX_WINNERS);
     boardStateCache = new HashSet<>();
@@ -55,21 +66,12 @@ public class Game {
     return rootMove;
   }
 
-  Board getBoard() {
+  public Board getBoard() {
     return board;
   }
 
-  private List<Move> play(UnprocessedMoves unprocessedMoves) throws IOException {
-    logger.severe("Target: " + rootMove.getBoardState().getChosenTarget() + " at position "
-            + board.getTargetPosition(rootMove.getBoardState().getChosenTarget())
-            + ". Robots: " + rootMove.getBoardState().asRobotPositionsString());
-    
-    if (PAUSE_BEFORE_PLAY) {
-      logger.severe("Press a key to start.");
-      System.in.read();
-      logger.severe("Running...");
-    }
-
+  public List<Move> play() throws IOException {
+    UnprocessedMoves unprocessedMoves = UnprocessedMovesFactory.newUnprocessedMoves(unprocessedMovesType);
     unprocessedMoves.add(rootMove);
 
     while (!(unprocessedMoves.isEmpty())) {

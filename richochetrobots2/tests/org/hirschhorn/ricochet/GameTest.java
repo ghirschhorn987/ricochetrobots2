@@ -53,7 +53,7 @@ public class GameTest {
     
     Move rootMove = new Move(null, boardState, null);
 
-    Game game = new Game(board, rootMove);
+    Game game = new Game(board, rootMove, UnprocessedMovesType.BREADTH_FIRST_SEARCH);
     
     Move parentMove = game.getRootMove();
     Move actualMove = game.createChildMove(parentMove, Color.Blue, Direction.South);
@@ -73,7 +73,7 @@ public class GameTest {
     robotPositions.setRobotPosition(Color.Red, Position.of(3, 7));
     BoardState boardState = new BoardState(target, robotPositions.build());
     
-    Game game = (new GameFactory()).createGame(0);
+    Game game = (new GameFactory()).createGame(0, UnprocessedMovesType.BREADTH_FIRST_SEARCH);
     Move rootMove = new Move(null, boardState, null);
     Move actualMove = game.createChildMove(rootMove, Color.Red, Direction.North);
     MoveAction expectedMoveAction = new MoveAction(Color.Red, Direction.North, 2);
@@ -83,7 +83,7 @@ public class GameTest {
   
   @Test
   public void createChildMovesShouldContainCorrectMoves() {
-    Game game = (new GameFactory()).createGame(2);
+    Game game = (new GameFactory()).createGame(2, UnprocessedMovesType.BREADTH_FIRST_SEARCH);
     Move rootMove = game.getRootMove();
     
     int moveNum = 1;

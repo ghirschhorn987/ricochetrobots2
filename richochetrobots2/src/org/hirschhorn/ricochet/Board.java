@@ -1,5 +1,6 @@
 package org.hirschhorn.ricochet;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -42,10 +43,8 @@ public class Board {
     return targetsToPositions.get(target);
   }
 
-  List<BoardItem> getBoardItems() {
-    return boardItems;
+  public List<BoardItem> getBoardItems() {
+    return Collections.unmodifiableList(boardItems);
   }
-  
-//Board (walls, target positions)
 
 }

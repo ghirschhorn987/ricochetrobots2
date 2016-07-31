@@ -10,11 +10,11 @@ public class GameFactory {
   public static final int MAX_Y = 16;
   public static final int MAX_X = 16;
   
-  public Game createGame(int iteration) {
-    return createGame(iteration, null);
+  public Game createGame(int iteration, UnprocessedMovesType unprocessedMovesType) {
+    return createGame(iteration, null, unprocessedMovesType);
   }
 
-  public Game createGame(int iteration, RobotPositions robotPositions) {
+  public Game createGame(int iteration, RobotPositions robotPositions, UnprocessedMovesType unprocessedMovesType) {
     Board board = new Board(createTargetsToPositions(), createBoardItems());
     
     if (robotPositions == null) {
@@ -22,7 +22,7 @@ public class GameFactory {
     }
     
     Move rootMove = new Move(null, createInitialBoardState(iteration, robotPositions), null);
-    Game game = new Game(board, rootMove);
+    Game game = new Game(board, rootMove, unprocessedMovesType);
     return game;
   }
   
