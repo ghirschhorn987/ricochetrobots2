@@ -22,6 +22,10 @@ function startGame() {
 		url : "/ricochet/game/start",
 		success : function(result) {
 			writeMessage(result);
+		    document.getElementById("moveBlueUp").style.visibility = "visible";
+		    document.getElementById("moveBlueDown").style.visibility = "visible";
+		    document.getElementById("moveBlueLeft").style.visibility = "visible";
+		    document.getElementById("moveBlueRight").style.visibility = "visible";
 		}
 	});
 }

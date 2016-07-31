@@ -21,12 +21,11 @@
 
     <div>
       <button onclick="startGame()">Start game</button>
-      <button id="moveRobotButton" onclick="move()">Click Me To Move Robot</button>
       <br/>
-      <button id = "moveBlueUp" onclick= "ajaxMoveRobot('Blue', 'North')">Click to move blue up</button>
-      <button id = "moveBlueDown" onclick= "ajaxMoveRobot('Blue', 'South')">Click to move blue down</button>
-      <button id = "moveBlueLeft" onclick= "ajaxMoveRobot('Blue', 'West')">Click to move blue left</button>
-      <button id = "moveBlueRight" onclick= "ajaxMoveRobot('Blue', 'East')">Click to move blue right</button>
+      <button class= "moveButton" id = "moveBlueUp" onclick= "ajaxMoveRobot('Blue', 'North')">Click to move blue up</button>
+      <button class= "moveButton" id = "moveBlueDown" onclick= "ajaxMoveRobot('Blue', 'South')">Click to move blue down</button>
+      <button class= "moveButton" id = "moveBlueLeft" onclick= "ajaxMoveRobot('Blue', 'West')">Click to move blue left</button>
+      <button class= "moveButton" id = "moveBlueRight" onclick= "ajaxMoveRobot('Blue', 'East')">Click to move blue right</button>
     </div>
     <br/>
     <a href="/ricochet/game/play?iteration=0">Play Game 0</a>
