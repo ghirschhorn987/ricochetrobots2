@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<classpath>
+	<classpathentry kind="src" path="richochetrobots2/src"/>
+	<classpathentry kind="src" path="richochetrobots2/tests"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.junit.JUNIT_CONTAINER/4"/>
+	<classpathentry kind="con" path="com.google.appengine.eclipse.core.GAE_CONTAINER"/>
+	<classpathentry kind="lib" path="C:/projects/git/ricochetrobots2/richochetrobots2/WEB-INF/lib/gson-2.7.jar"/>
+	<classpathentry kind="output" path="richochetrobots2/WEB-INF/classes"/>
+</classpath>

@@ -62,10 +62,12 @@ public class RicochetRobotsServlet extends HttpServlet {
     }
   }
 
-  private void doGetStartGame(HttpServletRequest request, HttpServletResponse response) {
+  private void doGetStartGame(HttpServletRequest request, HttpServletResponse response) throws IOException {
+    PrintWriter out = response.getWriter();
     Game game = (new GameFactory()).createGame(0, UnprocessedMovesType.BREADTH_FIRST_SEARCH);
     getServletContext().setAttribute("GAME", game);
     getServletContext().setAttribute("BOARD_STATE", game.getRootMove().getBoardState());
+    out.println("Game started.");
   }
 
   private Game getGame() {

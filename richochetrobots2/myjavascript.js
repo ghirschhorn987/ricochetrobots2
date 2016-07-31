@@ -17,9 +17,18 @@ function init() {
 	buildWallsFromServer();
 }
 
+function startGame() {
+	$.ajax({
+		url : "/ricochet/game/start",
+		success : function(result) {
+			writeMessage(result);
+		}
+	});
+}
+
 function buildWallsFromServer() {
 	$.ajax({
-		url : "/richochet/board/get",
+		url : "/ricochet/board/get",
 		success : function(result) {
 		    var boardItems = JSON.parse(result);
 			buildWalls(boardItems);
@@ -72,11 +81,11 @@ function writeMessage(message) {
 	document.getElementById("message").innerHTML = message;
 }
 
-function XToCellX(x) {
+function xToCellX(x) {
 	return (x / CELL_WIDTH)
 }
 
-function YToCellY(y) {
+function yToCellY(y) {
 	return (y / CELL_HEIGHT)
 }
 
@@ -127,18 +136,15 @@ function moveVertical(robot, newY) {
 	// console.log("entering moveTo( " + newX + "," + newY + ")");
 	y = robot.offsetTop;
 	// console.log("x,y=" + x + "," + y);
-	moved = false;
 	if (newY > y) {
-		moved = true;
 		robot.style.top = y + 2;
 		// console.log("offsetTop=" + robot.offsetTop);
 	}
 	if (newY < y) {
-		moved = true;
 		robot.style.top = y - 2;
 		// console.log("offsetTop=" + robot.offsetTop);
 	}
-	if (moved == true) {
+	if (newY != y) {
 		setTimeout(function() {
 			moveVertical(robot, newY)
 		}, 10);
@@ -147,19 +153,16 @@ function moveVertical(robot, newY) {
 
 function moveHorizontal(robot, newX){
 	x = robot.offsetLeft;
-	moved = false;
 	if (newX > x) {
-		moved = true;
 		robot.style.left = x + 2;
 		// console.log("offsetLeft=" + robot.offsetLeft);
 	}
 	if (newX < x){
-		moved = true;
 		robot.style.left = x - 2;
 	}
-	if (moved == true) {
+	if (newX != x) {
 		setTimeout(function() {
-			moveVertical(robot, newY)
+			moveHorizontal(robot, newX)
 		}, 10);
 	}
 }
