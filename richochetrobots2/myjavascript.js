@@ -72,32 +72,98 @@ function writeMessage(message) {
 	document.getElementById("message").innerHTML = message;
 }
 
-function move() {
-	moveTo(redRobot, redRobot.offsetLeft, 600);
+function XToCellX(x) {
+	return (x / CELL_WIDTH)
 }
 
-function moveTo(robot, newX, newY) {
+function YToCellY(y) {
+	return (y / CELL_HEIGHT)
+}
+
+function move() {
+	moveVertical(blueRobot, cellXToX(10));
+}
+
+function ajaxMoveRobot(robotColor, direction){
+	$.ajax({
+		url : "/ricochet/robot/move?robot=" +robotColor+ "&direction=" +direction,
+		success : function(result) {
+			var position = JSON.parse(result);
+			var robot = getRobotFromColor(robotColor);
+			switch (direction) {
+			  case 'North':
+			  case 'South':
+				moveVertical(robot, cellYToY(position.y));
+			    break;
+			  case 'East':
+			  case 'West':
+				moveHorizontal(robot, cellXToX(position.x));
+			    break;
+			}
+		}
+	});
+}
+
+function getRobotFromColor(color){
+	var robot;
+	switch (color) {
+	  case "Blue":
+		robot = document.getElementById("blueRobot");
+		break;
+	  case "Red":
+			robot = document.getElementById("redRobot");
+			break;
+	  case "Yellow":
+			robot = document.getElementById("yellowRobot");
+			break;
+	  case "Green":
+			robot = document.getElementById("greenRobot");
+			break;
+	}
+	return robot;
+}
+
+function moveVertical(robot, newY) {
 	// console.log("entering moveTo( " + newX + "," + newY + ")");
-	x = robot.offsetLeft;
 	y = robot.offsetTop;
 	// console.log("x,y=" + x + "," + y);
 	moved = false;
-	if (newX != x) {
-		moved = true;
-		robot.style.left = x + 2;
-		// console.log("offsetLeft=" + robot.offsetLeft);
-	}
-	if (newY != y) {
+	if (newY > y) {
 		moved = true;
 		robot.style.top = y + 2;
 		// console.log("offsetTop=" + robot.offsetTop);
 	}
+	if (newY < y) {
+		moved = true;
+		robot.style.top = y - 2;
+		// console.log("offsetTop=" + robot.offsetTop);
+	}
 	if (moved == true) {
 		setTimeout(function() {
-			moveTo(robot, newX, newY)
+			moveVertical(robot, newY)
 		}, 10);
 	}
 }
+
+function moveHorizontal(robot, newX){
+	x = robot.offsetLeft;
+	moved = false;
+	if (newX > x) {
+		moved = true;
+		robot.style.left = x + 2;
+		// console.log("offsetLeft=" + robot.offsetLeft);
+	}
+	if (newX < x){
+		moved = true;
+		robot.style.left = x - 2;
+	}
+	if (moved == true) {
+		setTimeout(function() {
+			moveVertical(robot, newY)
+		}, 10);
+	}
+}
+
 
 function cellXToX(cellX) {
 	return (cellX * CELL_WIDTH);

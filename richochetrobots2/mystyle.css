@@ -10,19 +10,19 @@
 .robot { 
   position: absolute;
 }
- #redRobot {
+ #blueRobot {
  top: 0;
  left: 0;
  }
- #blueRobot {
+ #greenRobot {
  top: 0;
  right: 0;
  }
-  #yellowRobot {
+  #redRobot {
  top: 600;
  left: 0;
  }
-  #greenRobot {
+  #yellowRobot {
  top: 600;
  right: 0;
  }

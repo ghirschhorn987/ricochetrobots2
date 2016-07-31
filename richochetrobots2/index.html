@@ -20,12 +20,15 @@
       src="images/blue_circle.png" alt="Blue Robot">
 
     <div>
-      <button id="moveRobotButton" onclick="move()">Click Me To
-        Move Robot</button>
+      <button id="moveRobotButton" onclick="move()">Click Me To Move Robot</button>
+      <button id = "moveBlueDown" onclick= "ajaxMoveRobot('Blue', 'South')">Click to move blue down</button>
+      <button id = "moveBlueUp" onclick= "ajaxMoveRobot('Blue', 'North')">Click to move blue up</button>
+      <button id = "moveBlueRight" onclick= "ajaxMoveRobot('Blue', 'East')">Click to move blue right</button>
     </div>
-    <a href="richochet/board/get">Board Items</a>
-    <a href="richochet/game/play?iteration=0">Play Game 0</a>
-    <a href="richochet/game/play?iteration=1">Play Game 1</a>
+    <a href="/ricochet/board/get">Board Items</a>
+    <a href="/ricochet/game/start">Start Game</a>
+    <a href="/ricochet/game/play?iteration=0">Play Game 0</a>
+    <a href="/ricochet/game/play?iteration=1">Play Game 1</a>
     <div id="message"></div>
   </div>
 </body>

@@ -5,14 +5,15 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Scanner;
 import java.util.Set;
 import java.util.logging.Logger;
 
 public class Game {
 
-  private static final int NUMBER_OF_ITERATIONS = 200;
+  private static final int NUMBER_OF_ITERATIONS = 15;
   private static final int START_ITERATION = 0;
-  private static final boolean PAUSE_BEFORE_PLAY = false;
+  private static final boolean PAUSE_BEFORE_PLAY = true;
   private static final int MAX_DEPTH = 15;
   private static final int MAX_WINNERS = 1;
 
@@ -34,7 +35,8 @@ public class Game {
       logger.severe("======================================");
       logger.severe("NEW GAME. Iteration " + iteration);  
       logger.info("======================================");
-      RobotPositions robotPositions = (previousWinner == null) ? null : previousWinner.getBoardState().getRobotPositions();
+      RobotPositions robotPositions = null;
+//      RobotPositions robotPositions = (previousWinner == null) ? null : previousWinner.getBoardState().getRobotPositions();
       Game game = gameFactory.createGame(iteration % 16, robotPositions, movesType);
       
       BoardState boardState = game.getRootMove().getBoardState();
@@ -43,9 +45,9 @@ public class Game {
               + ". Robots: " + boardState.asRobotPositionsString());
       
       if (PAUSE_BEFORE_PLAY) {
-        logger.severe("Press a key to start.");
-        System.in.read();
-        logger.severe("Running...");
+        logger.severe("Press any key to continue...");
+        (new Scanner(System.in)).nextLine();
+        //logger.severe("Running...");
       }
       
       List<Move> winners = game.play();
@@ -62,7 +64,7 @@ public class Game {
     boardStateCache = new HashSet<>();
   }
 
-  Move getRootMove() {
+  public Move getRootMove() {
     return rootMove;
   }
 
@@ -71,6 +73,7 @@ public class Game {
   }
 
   public List<Move> play() throws IOException {
+    moveStats.playStarted();
     UnprocessedMoves unprocessedMoves = UnprocessedMovesFactory.newUnprocessedMoves(unprocessedMovesType);
     unprocessedMoves.add(rootMove);
 
@@ -150,64 +153,15 @@ public class Game {
   }
 
   Move createChildMove(Move parentMove, Color robot, Direction direction) {
-    int numberOfSpaces = 0;
-    BoardState parentBoardState = parentMove.getBoardState();
-    RobotPositions.Builder robotPositionsBuilder = new RobotPositions.Builder(parentBoardState.getRobotPositions());
-    Position robotPosition = robotPositionsBuilder.getRobotPosition(robot);
-    boolean hitObject = false;
-    while (!hitObject) {
-      if (board.hasWall(robotPosition, direction)) {
-        hitObject = true;
-      } else {
-        Position potentialPosition = getAdjacentPosition(robotPosition, direction);
-        if (hasRobot(potentialPosition, robotPositionsBuilder)) {
-          hitObject = true;
-        } else {
-          robotPosition = potentialPosition;
-          numberOfSpaces++;
-          // Is this really needed? If this is only robot moving, do we need to
-          // update positions? Won't collide with self.
-          robotPositionsBuilder.setRobotPosition(robot, robotPosition);
-        }
-      }
-    }
-
-    MoveAction moveAction = new MoveAction(robot, direction, numberOfSpaces);
-    BoardState childBoardState = new BoardState(parentMove.getChosenTarget(), robotPositionsBuilder.build());
-    Move nextMove = new Move(parentMove, childBoardState, moveAction);
-    return nextMove;
+    RobotPositions robotPositions = parentMove.getBoardState().getRobotPositions();
+    Position oldPosition = robotPositions.getRobotPosition(robot); 
+    Position newPosition = MoveCalculator.calculateRobotPosition(parentMove.getBoardState(), board, robot, direction);
+    int spacesMoved = Math.abs(newPosition.getX() - oldPosition .getX()) + Math.abs(newPosition.getY() - oldPosition.getY());
+    
+    MoveAction moveAction = new MoveAction(robot, direction, spacesMoved);    
+    RobotPositions newRobotPositions = (new RobotPositions.Builder(robotPositions)).setRobotPosition(robot, newPosition).build();
+    BoardState childBoardState = new BoardState(parentMove.getChosenTarget(), newRobotPositions);
+    return new Move(parentMove, childBoardState, moveAction);
   }
-
-  private Position getAdjacentPosition(Position robotPosition, Direction direction) {
-    int newX = robotPosition.getX();
-    int newY = robotPosition.getY();
-    switch (direction) {
-      case North:
-        newY--;
-        break;
-      case South:
-        newY++;
-        break;
-      case East:
-        newX++;
-        break;
-      case West:
-        newX--;
-        break;
-      default:
-        throw new AssertionError("Unknown direction: " + direction);
-    }
-    Position adjacentPosition = Position.of(newX, newY);
-    return adjacentPosition;
-  }
-
-  private boolean hasRobot(Position potentialPosition, RobotPositions.Builder positions) {
-    for (Color robot : Color.values()) {
-      if (potentialPosition.equals(positions.getRobotPosition(robot))) {
-        return true;
-      }
-    }
-    return false;
-  }
-
+  
 }

@@ -45,12 +45,15 @@ public class MoveStats {
       maxPossibleMoves += Math.pow(16, depth);
     }
     remainingPossibleMoves = maxPossibleMoves;
-    
-    startMillis = System.currentTimeMillis();
   }
   
   public List<Move> getWinners() {
     return winners;
+  }
+  
+  public MoveStats playStarted() {
+    startMillis = System.currentTimeMillis();
+    return this;
   }
   
   public MoveStats moveProcessed(Move parentMove, List<Move> childMovesCreated) {
@@ -84,8 +87,6 @@ public class MoveStats {
         remainingPossibleMoves -= totalFutureMovesNoLongerPossible;
       }
     }
-
-    long processedMoves = aliveMoves + deadMoves;
     
     if (parentMove.getDepth() != mostRecentDepth) {
       logger.fine("" + parentMove);
@@ -93,7 +94,7 @@ public class MoveStats {
       mostRecentDepth = parentMove.getDepth();
     }
     
-    if (processedMoves % PRINT_MOVE_STATS_FREQUENCY == 0) {
+    if ((getProcessedMovesCount() % PRINT_MOVE_STATS_FREQUENCY) == 0) {
       printStats(parentMove.getDepth());
     }
     
@@ -104,7 +105,7 @@ public class MoveStats {
     long elapsedMillis = System.currentTimeMillis() - startMillis;
     //logger.info("Depth: " + parentMove.getDepth() + " MovesProcessed: " + processedMoves + " ElapsedSeconds: "
     //     + (elapsedMillis / 1000) + " Move: " + parentMove);
-    logger.info(String.format("%d seconds. Depth: %d. %s", (elapsedMillis / 1000), depth, toString()));
+    logger.info(String.format("%.2f seconds. Depth: %d. %s", (elapsedMillis / 1000.0), depth, toString()));
   }
   
   
@@ -120,7 +121,11 @@ public class MoveStats {
 
   public void winnerFound(Move nextMove) {
     winners.add(nextMove);
-    logger.severe("FOUND A WINNER AT DEPTH " + nextMove.getDepth() + ". colors: " + nextMove.numberOfColorsInPath() + ".  " + nextMove.toString());
+    logger.severe("FOUND A WINNER AT DEPTH " + nextMove.getDepth() + ". pocessesedMoves: " + getProcessedMovesCount() + ". colors: " + nextMove.numberOfColorsInPath() + ".  " + nextMove.toString());
+  }
+
+  private long getProcessedMovesCount() {
+    return aliveMoves + deadMoves;
   }
 
   public boolean maxWinnersReached() {
