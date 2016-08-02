@@ -1,35 +1,35 @@
 #board {
-  position: relative;
-  width: 640;
-  height: 640;
+ position: relative;
+ width: 640;
+ height: 640;
 }
 
 #canvasBoard {
-  position: absolute;
-  display:block; 
-  z-index: 2;
+ position: absolute;
+ display: block;
+ z-index: 2;
 }
 
 #boardSvg {
-  position: absolute;
-  display:block; 
-  background-color: #ebedec;
-  z-index: 1;
+ position: absolute;
+ display: block;
+ background-color: #ebedec;
+ z-index: 1;
 }
 
 .target {
-	visibility: hidden
+ visibility: hidden
 }
 
-#redSquare{
-	fill: rgb(225,0,0);
-	x: 520;
-	y: 400;
+#redSquare {
+ fill: rgb(225, 0, 0);
+ x: 520;
+ y: 400;
 }
 
-.robot { 
-  position: absolute;
-  z-index: 99;
+.robot {
+ position: absolute;
+ z-index: 99;
 }
 
 #blueRobot {
@@ -51,4 +51,3 @@
  top: 600;
  right: 0;
 }
-

@@ -13,35 +13,30 @@
     <svg id="boardSvg" width="640" height="640">
       <rect class="target" id="redSquare" width="38" height="38" />
     </svg>
-  
+
     <img class="robot" id="redRobot" width="40" height="40"
       src="images/red_circle.svg" alt="Red Robot"
-      onclick="justClicked('Red')">
-    <img class="robot" id="yellowRobot" width="40" height="40"
+      onclick="justClicked('Red')"> <img class="robot"
+      id="yellowRobot" width="40" height="40"
       src="images/yellow_circle.png" alt="Yellow Robot"
-      onclick="justClicked('Yellow')">
-    <img class="robot" id="greenRobot" width="40" height="40"
+      onclick="justClicked('Yellow')"> <img class="robot"
+      id="greenRobot" width="40" height="40"
       src="images/green_circle.svg" alt="Green Robot"
-      onclick="justClicked('Green')">
-    <img class="robot" id="blueRobot" width="40" height="40"
-      src="images/blue_circle.png" alt="Blue Robot"
-      onclick="justClicked('Blue')">
+      onclick="justClicked('Green')"> <img class="robot"
+      id="blueRobot" width="40" height="40" src="images/blue_circle.png"
+      alt="Blue Robot" onclick="justClicked('Blue')">
   </div>
 
   <div id="buttons">
     <br />
     <button onclick="ajaxStartGame()">Start game</button>
 
-  
-    <br />
-    Target Position (0-15): <input id="iteration" type="text"/>
-    <button onclick="ajaxSolveGame()">Solve game</button> (0, 3. 13 all work relatively quickly)
-    
-    <br />
+    <br /> Target Position (0-15): <input id="iteration" type="text" />
+    <button onclick="ajaxSolveGame()">Solve game</button>
+    (0, 3. 13 all work relatively quickly) <br />
     <div id="message"></div>
-  
-    <br />
-    <a href="/ricochet/board/get">Board Items</a>
+
+    <br /> <a href="/ricochet/board/get">Board Items</a>
   </div>
 </body>
 </html>
