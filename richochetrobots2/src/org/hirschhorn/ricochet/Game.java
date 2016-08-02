@@ -13,7 +13,7 @@ public class Game {
 
   private static final int NUMBER_OF_ITERATIONS = 15;
   private static final int START_ITERATION = 0;
-  private static final boolean PAUSE_BEFORE_PLAY = true;
+  private static final boolean PAUSE_BEFORE_PLAY = false;
   private static final int MAX_DEPTH = 15;
   private static final int MAX_WINNERS = 1;
 
