@@ -1,7 +1,5 @@
 package org.hirschhorn.ricochet.servlets;
 
-import java.io.Console;
-
 //TODO: Set robot positions in UI from server
 //TODO: Set targets in UI from server
 //TODO: Add click handler to move robots
@@ -56,6 +54,9 @@ public class RicochetRobotsServlet extends HttpServlet {
       case "/board/get":
         doGetBoard(request, response);
         break;
+      case "/boardstate/get":
+        doGetBoardState(request, response);
+        break;
       case "/game/play":
         doGetPlayGame(request, response);
         break;
@@ -64,6 +65,9 @@ public class RicochetRobotsServlet extends HttpServlet {
         break;
       case "/robot/move":
         doMoveRobot(request, response);
+        break;
+      case "/robot/iswinner":
+        doIsWinner(request, response);
         break;
       default:
         response.setContentType("text/html");
@@ -95,6 +99,15 @@ public class RicochetRobotsServlet extends HttpServlet {
     getServletContext().setAttribute("BOARD_STATE", newBoardState);
   }
   
+  private void doIsWinner(HttpServletRequest request, HttpServletResponse response) throws IOException {
+    PrintWriter out = response.getWriter();
+    Color robot = Color.valueOf(request.getParameter("robot"));
+    Game game = getGame();
+    Gson gson = new Gson();
+    boolean isWinner = isWinner(robot, game.getBoard(), getBoardState());
+    out.println(gson.toJson(isWinner));
+  }
+
   private void doMoveRobot(HttpServletRequest request, HttpServletResponse response) throws IOException {
     PrintWriter out = response.getWriter();
     Color robot = Color.valueOf(request.getParameter("robot"));
@@ -103,16 +116,11 @@ public class RicochetRobotsServlet extends HttpServlet {
     Position newPosition = MoveCalculator.calculateRobotPosition(getBoardState(), game.getBoard(), robot, direction);
     updateBoardState(robot, newPosition);
     Gson gson = new Gson();
-    if(isWinner(robot, newPosition, game.getBoard(), getBoardState())){
-      out.println(gson.toJson(newPosition));
-      //TODO print something to alert our code
-    } else {
-      out.println(gson.toJson(newPosition));
-    }
+    out.println(gson.toJson(newPosition));
   }
 
 
-  private boolean isWinner(Color robot, Position newPosition, Board board, BoardState boardState) {
+  private boolean isWinner(Color robot,Board board, BoardState boardState) {
     Target chosenTarget = boardState.getChosenTarget();
     Color targetColor = chosenTarget.getColor();
     return boardState.getRobotPosition(targetColor).equals(board.getTargetPosition(chosenTarget));
@@ -156,15 +164,13 @@ public class RicochetRobotsServlet extends HttpServlet {
     out.println(gson.toJson(game.getBoard().getBoardItems()));
   }
  
-  private void doGetMove(HttpServletRequest request, HttpServletResponse response) throws IOException {
+  private void doGetBoardState(HttpServletRequest request, HttpServletResponse response) throws IOException {
     PrintWriter out = response.getWriter();    
     response.setContentType("text/plain");
     response.setStatus(HttpServletResponse.SC_OK);
-    Game game = (new GameFactory()).createGame(0, UnprocessedMovesType.BREADTH_FIRST_SEARCH);
     Gson gson = new Gson();
-    out.println(gson.toJson(game.getBoard().getBoardItems()));
+    out.println(gson.toJson(getBoardState()));
   }
- 
 
   private String getMoveActionsAsJsonString(Move move) {
     Gson gson = new Gson();

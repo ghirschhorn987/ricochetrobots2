@@ -1,75 +1,55 @@
 #board {
-  position: absolute;
+  position: relative;
+  width: 640;
+  height: 640;
 }
 
 #canvasBoard {
+  position: absolute;
+  display:block; 
+  z-index: 2;
+}
+
+#boardSvg {
+  position: absolute;
   display:block; 
   background-color: #ebedec;
+  z-index: 1;
 }
 
 .target {
 	visibility: hidden
 }
+
 #redSquare{
 	fill: rgb(225,0,0);
 	x: 520;
 	y: 400;
 }
 
-#container {
-  position: relative;
-}
-#container svg, #overlay {
-  position: absolute;
-}
-svg {
-  border: 1px solid black;
-}
-
 .robot { 
   position: absolute;
+  z-index: 99;
 }
- #blueRobot {
+
+#blueRobot {
  top: 0;
  left: 0;
- }
- #greenRobot {
+}
+
+#greenRobot {
  top: 0;
  right: 0;
- }
-  #redRobot {
+}
+
+#redRobot {
  top: 600;
  left: 0;
- }
-  #yellowRobot {
+}
+
+#yellowRobot {
  top: 600;
  right: 0;
- }
-
-.moveButton {
-	visibility: hidden;
-} 
-
-#container {
-  position: relative;
-}
-#container canvas, #overlay {
-  position: absolute;
-}
-canvas {
-  border: 1px solid black;
 }
 
 
-#svg{
-	height: 640;
-	width: 640;
-}
-#container{
-  height: 640;
-  width: 640;
-}
-#cross{
-	height: 640;
-  width: 640;
-}

@@ -1,47 +1,46 @@
 <html>
+
 <head>
 <link rel="stylesheet" type="text/css" href="mystyle.css">
 <script
   src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
 <script src="myjavascript.js"></script>
 </head>
+
 <body onload="init()">
   <div id="board">
-    <div id="container" onclick="point_it(event)" style = "background-image:url('sun.jpg');">
     <canvas id="canvasBoard" width="640" height="640"></canvas>
-    <svg id="svg">
+    <svg id="boardSvg" width="640" height="640">
       <rect class="target" id="redSquare" width="38" height="38" />
     </svg>
-    <img src="point.gif" id="cross" style="position:relative;visibility:hidden;z-index:2;">
-    </div>
+  
     <img class="robot" id="redRobot" width="40" height="40"
-      src="images/red_circle.svg" alt="Red Robot">
-    <img
-      class="robot" id="yellowRobot" width="40" height="40"
-      src="images/yellow_circle.png" alt="Yellow Robot"> <img
-      class="robot" id="greenRobot" width="40" height="40"
-      src="images/green_circle.svg" alt="Green Robot"> <img
-      class="robot" id="blueRobot" width="40" height="40"
-      src="images/blue_circle.png" alt="Blue Robot">
-    <div>
-      <button onclick="startGame()">Start game</button>
-      <br/>
-      <button class= "moveButton" id = "moveBlueUp" onclick= "ajaxMoveRobot('Blue', 'North')">Click to move blue up</button>
-      <button class= "moveButton" id = "moveBlueDown" onclick= "ajaxMoveRobot('Blue', 'South')">Click to move blue down</button>
-      <button class= "moveButton" id = "moveBlueLeft" onclick= "ajaxMoveRobot('Blue', 'West')">Click to move blue left</button>
-      <button class= "moveButton" id = "moveBlueRight" onclick= "ajaxMoveRobot('Blue', 'East')">Click to move blue right</button>
-      </div>
-      <span>
-      <button class= "moveButton" id = "moveRedUp" onclick= "ajaxMoveRobot('Red', 'North')">Click to move red up</button>
-      <button class= "moveButton" id = "moveRedDown" onclick= "ajaxMoveRobot('Red', 'South')">Click to move red down</button>
-      <button class= "moveButton" id = "moveRedLeft" onclick= "ajaxMoveRobot('Red', 'West')">Click to move red left</button>
-      <button class= "moveButton" id = "moveRedRight" onclick= "ajaxMoveRobot('Red', 'East')">Click to move red right</button>     
-    </span> 
-      <br/>
-    <a href="/ricochet/game/play?iteration=0">Play Game 0</a>
-    <a href="/ricochet/game/play?iteration=1">Play Game 1</a>
+      src="images/red_circle.svg" alt="Red Robot"
+      onclick="justClicked('Red')">
+    <img class="robot" id="yellowRobot" width="40" height="40"
+      src="images/yellow_circle.png" alt="Yellow Robot"
+      onclick="justClicked('Yellow')">
+    <img class="robot" id="greenRobot" width="40" height="40"
+      src="images/green_circle.svg" alt="Green Robot"
+      onclick="justClicked('Green')">
+    <img class="robot" id="blueRobot" width="40" height="40"
+      src="images/blue_circle.png" alt="Blue Robot"
+      onclick="justClicked('Blue')">
+  </div>
+
+  <div id="buttons">
+    <br />
+    <button onclick="ajaxStartGame()">Start game</button>
+
+  
+    <br />
+    Target Position (0-15): <input id="iteration" type="text"/>
+    <button onclick="ajaxSolveGame()">Solve game</button> (0, 3. 13 all work relatively quickly)
+    
+    <br />
     <div id="message"></div>
-    <br/>
+  
+    <br />
     <a href="/ricochet/board/get">Board Items</a>
   </div>
 </body>
