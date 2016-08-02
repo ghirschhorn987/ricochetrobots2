@@ -1,7 +1,7 @@
 CELL_WIDTH = 40;
 CELL_HEIGHT = 40;
 WALL_THICKNESS = 3;
-mostRecentlyClicked = null;
+mostRecentlyClickedRobotColor = null;
 canvasBoard = null;
 contextBoard = null;
 
@@ -19,9 +19,9 @@ function init() {
 
   contextBoard.fillRect(cellXToX(7), cellYToY(7), CELL_WIDTH * 2,
       CELL_HEIGHT * 2);
-  buildWallsFromServer();
+  ajaxBuildWalls();
 
-  canvasBoard.addEventListener("mousedown", moveRobotTowardCanvasClick, false);
+  canvasBoard.addEventListener("mousedown", ajaxMoveRobotTowardCanvasClick, false);
 }
 
 function ajaxStartGame() {
@@ -45,12 +45,12 @@ function ajaxSolveGame() {
       var actionWhenDone = function(currentAction) {
         if (currentAction < moveActions.length) {
           var moveAction = moveActions[currentAction];
-          ajaxMoveRobot(moveAction.robot, moveAction.direction, function() {
+          ajaxMoveRobotTowardDirection(moveAction.robot, moveAction.direction, function() {
             actionWhenDone(currentAction + 1)
           });
         }
       };
-      ajaxMoveRobot(moveActions[1].robot, moveActions[1].direction, function() {
+      ajaxMoveRobotTowardDirection(moveActions[1].robot, moveActions[1].direction, function() {
         actionWhenDone(2)
       });
     }
@@ -59,34 +59,15 @@ function ajaxSolveGame() {
 
 function ajaxMoveRobotTowardCanvasClick(event) {
   var pos = getPositionOnCanvas(canvasBoard, event);
-  ajaxMoveRobot(pos, mostRecentlyClicked);
+  ajaxMoveRobotTowardPosition(mostRecentlyClickedRobotColor, pos);
 }
 
-function ajaxMoveRobot(pos, color) {
-  var posX = pos.x;
-  var posY = pos.y;
-  var robot = getRobotFromColor(color);
-  var direction;
-  if ((posX > robot.offsetLeft) && (posY - robot.offsetTop < CELL_HEIGHT)
-      && (posY - robot.offsetTop > 0)) {
-    direction = 'East';
-  }
-  if ((posY > robot.offsetTop) && (posX - robot.offsetLeft < CELL_WIDTH)
-      && (posX - robot.offsetLeft > 0)) {
-    direction = 'South';
-  }
-  if ((posY < robot.offsetTop) && (posX - robot.offsetLeft < CELL_WIDTH)
-      && (posX - robot.offsetLeft > 0)) {
-    direction = 'North';
-  }
-  if ((posX < robot.offsetLeft) && (posY - robot.offsetTop < CELL_HEIGHT)
-      && (posY - robot.offsetTop > 0)) {
-    direction = 'West';
-  }
-  ajaxMoveRobot(color, direction);
+function ajaxMoveRobotTowardPosition(robotColor, pos) {
+  var direction = getDirectionOfPositionRelativeToRobot(pos, getRobotFromColor(robotColor));
+  ajaxMoveRobotTowardDirection(robotColor, direction);
 }
 
-function ajaxMoveRobot(robotColor, direction, actionWhenDone) {
+function ajaxMoveRobotTowardDirection(robotColor, direction, actionWhenDone) {
   $.ajax({
     url : "/ricochet/robot/move?robot=" + robotColor + "&direction="
         + direction,
@@ -110,7 +91,7 @@ function ajaxCheckForWinner(robot) {
   });
 }
 
-function buildWallsFromServer() {
+function ajaxBuildWalls() {
   $.ajax({
     url : "/ricochet/board/get",
     success : function(result) {
@@ -187,7 +168,9 @@ function moveVertical(robot, newY, actionWhenDone) {
     }, 5);
   } else {
     ajaxCheckForWinner(robot);
-    actionWhenDone();
+    if (actionWhenDone != null) {
+      actionWhenDone();
+    }
   }
 }
 
@@ -205,12 +188,14 @@ function moveHorizontal(robot, newX, actionWhenDone) {
     }, 5);
   } else {
     ajaxCheckForWinner(robot);
-    actionWhenDone();
+    if (actionWhenDone != null) {
+      actionWhenDone();
+    }
   }
 }
 
-function justClicked(color) {
-  mostRecentlyClicked = color;
+function justClicked(robotColor) {
+  mostRecentlyClickedRobotColor = robotColor;
 }
 
 function writeMessage(message) {
@@ -242,6 +227,29 @@ function xToCellX(x) {
 
 function yToCellY(y) {
   return (y / CELL_HEIGHT)
+}
+
+function getDirectionOfPositionRelativeToRobot(pos, robot) {
+  var posX = pos.x;
+  var posY = pos.y;
+  var direction;
+  if ((posX > robot.offsetLeft) && (posY - robot.offsetTop < CELL_HEIGHT)
+      && (posY - robot.offsetTop > 0)) {
+    direction = 'East';
+  }
+  if ((posY > robot.offsetTop) && (posX - robot.offsetLeft < CELL_WIDTH)
+      && (posX - robot.offsetLeft > 0)) {
+    direction = 'South';
+  }
+  if ((posY < robot.offsetTop) && (posX - robot.offsetLeft < CELL_WIDTH)
+      && (posX - robot.offsetLeft > 0)) {
+    direction = 'North';
+  }
+  if ((posX < robot.offsetLeft) && (posY - robot.offsetTop < CELL_HEIGHT)
+      && (posY - robot.offsetTop > 0)) {
+    direction = 'West';
+  }
+  return direction;
 }
 
 function getRobotFromColor(color) {
