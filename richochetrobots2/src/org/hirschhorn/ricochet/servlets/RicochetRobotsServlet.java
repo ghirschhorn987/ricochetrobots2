@@ -1,5 +1,13 @@
 package org.hirschhorn.ricochet.servlets;
 
+import java.io.Console;
+
+//TODO: Set robot positions in UI from server
+//TODO: Set targets in UI from server
+//TODO: Add click handler to move robots
+//TODO: Convert Image to SVG
+//TODO: Add Timer
+
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.ArrayList;
@@ -10,6 +18,7 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.hirschhorn.ricochet.Board;
 import org.hirschhorn.ricochet.BoardState;
 import org.hirschhorn.ricochet.Color;
 import org.hirschhorn.ricochet.Direction;
@@ -20,6 +29,7 @@ import org.hirschhorn.ricochet.MoveAction;
 import org.hirschhorn.ricochet.MoveCalculator;
 import org.hirschhorn.ricochet.Position;
 import org.hirschhorn.ricochet.RobotPositions;
+import org.hirschhorn.ricochet.Target;
 import org.hirschhorn.ricochet.UnprocessedMovesType;
 
 import com.google.gson.Gson;
@@ -93,9 +103,20 @@ public class RicochetRobotsServlet extends HttpServlet {
     Position newPosition = MoveCalculator.calculateRobotPosition(getBoardState(), game.getBoard(), robot, direction);
     updateBoardState(robot, newPosition);
     Gson gson = new Gson();
-    out.println(gson.toJson(newPosition));
+    if(isWinner(robot, newPosition, game.getBoard(), getBoardState())){
+      out.println(gson.toJson(newPosition));
+      //TODO print something to alert our code
+    } else {
+      out.println(gson.toJson(newPosition));
+    }
   }
 
+
+  private boolean isWinner(Color robot, Position newPosition, Board board, BoardState boardState) {
+    Target chosenTarget = boardState.getChosenTarget();
+    Color targetColor = chosenTarget.getColor();
+    return boardState.getRobotPosition(targetColor).equals(board.getTargetPosition(chosenTarget));
+  }
 
   private void doGetPlayGame(HttpServletRequest request, HttpServletResponse response) throws IOException {
     PrintWriter out = response.getWriter();
@@ -154,6 +175,7 @@ public class RicochetRobotsServlet extends HttpServlet {
     return gson.toJson(moveActions);
   }
 
+  
   public void destroy() {
   }
 }
