@@ -57,6 +57,59 @@ function ajaxSolveGame() {
   });
 }
 
+function ajaxMoveRobotTowardCanvasClick(event) {
+  var pos = getPositionOnCanvas(canvasBoard, event);
+  ajaxMoveRobot(pos, mostRecentlyClicked);
+}
+
+function ajaxMoveRobot(pos, color) {
+  var posX = pos.x;
+  var posY = pos.y;
+  var robot = getRobotFromColor(color);
+  var direction;
+  if ((posX > robot.offsetLeft) && (posY - robot.offsetTop < CELL_HEIGHT)
+      && (posY - robot.offsetTop > 0)) {
+    direction = 'East';
+  }
+  if ((posY > robot.offsetTop) && (posX - robot.offsetLeft < CELL_WIDTH)
+      && (posX - robot.offsetLeft > 0)) {
+    direction = 'South';
+  }
+  if ((posY < robot.offsetTop) && (posX - robot.offsetLeft < CELL_WIDTH)
+      && (posX - robot.offsetLeft > 0)) {
+    direction = 'North';
+  }
+  if ((posX < robot.offsetLeft) && (posY - robot.offsetTop < CELL_HEIGHT)
+      && (posY - robot.offsetTop > 0)) {
+    direction = 'West';
+  }
+  ajaxMoveRobot(color, direction);
+}
+
+function ajaxMoveRobot(robotColor, direction, actionWhenDone) {
+  $.ajax({
+    url : "/ricochet/robot/move?robot=" + robotColor + "&direction="
+        + direction,
+    success : function(result) {
+      var position = JSON.parse(result);
+      var robot = getRobotFromColor(robotColor);
+      moveRobotToPosition(robot, direction, position, actionWhenDone);
+    }
+  });
+}
+
+function ajaxCheckForWinner(robot) {
+  $.ajax({
+    url : "/ricochet/robot/iswinner?robot=" + getColorFromRobot(robot),
+    success : function(result) {
+      var isWinner = JSON.parse(result);
+      if (isWinner === true) {
+        alert("YOU WON: " + result);
+      }
+    }
+  });
+}
+
 function buildWallsFromServer() {
   $.ajax({
     url : "/ricochet/board/get",
@@ -107,8 +160,72 @@ function buildWall(cellX, cellY, direction) {
   }
 }
 
+function moveRobotToPosition(robot, direction, position, actionWhenDone) {
+  switch (direction) {
+  case 'North':
+  case 'South':
+    moveVertical(robot, cellYToY(position.y), actionWhenDone);
+    break;
+  case 'East':
+  case 'West':
+    moveHorizontal(robot, cellXToX(position.x), actionWhenDone);
+    break;
+  }
+}
+
+function moveVertical(robot, newY, actionWhenDone) {
+  y = robot.offsetTop;
+  if (newY > y) {
+    robot.style.top = y + 2;
+  }
+  if (newY < y) {
+    robot.style.top = y - 2;
+  }
+  if (newY != y) {
+    setTimeout(function() {
+      moveVertical(robot, newY, actionWhenDone)
+    }, 5);
+  } else {
+    ajaxCheckForWinner(robot);
+    actionWhenDone();
+  }
+}
+
+function moveHorizontal(robot, newX, actionWhenDone) {
+  x = robot.offsetLeft;
+  if (newX > x) {
+    robot.style.left = x + 2;
+  }
+  if (newX < x) {
+    robot.style.left = x - 2;
+  }
+  if (newX != x) {
+    setTimeout(function() {
+      moveHorizontal(robot, newX, actionWhenDone)
+    }, 5);
+  } else {
+    ajaxCheckForWinner(robot);
+    actionWhenDone();
+  }
+}
+
+function justClicked(color) {
+  mostRecentlyClicked = color;
+}
+
 function writeMessage(message) {
   document.getElementById("message").innerHTML = message;
+}
+
+function getPositionOnCanvas(canvas, domEvent) {
+  var rect = canvas.getBoundingClientRect();
+  var scaleX = canvas.width / rect.width;
+  var scaleY = canvas.height / rect.height;
+
+  return {
+    x : (domEvent.clientX - rect.left) * scaleX,
+    y : (domEvent.clientY - rect.top) * scaleY
+  }
 }
 
 function cellXToX(cellX) {
@@ -125,41 +242,6 @@ function xToCellX(x) {
 
 function yToCellY(y) {
   return (y / CELL_HEIGHT)
-}
-
-function moveRobotTowardCanvasClick(event) {
-  var pos = getPositionOnCanvas(canvasBoard, event);
-  moveRobot(pos.x, pos.y, mostRecentlyClicked);
-}
-
-function ajaxMoveRobot(robotColor, direction, actionWhenDone) {
-  $.ajax({
-    url : "/ricochet/robot/move?robot=" + robotColor + "&direction="
-        + direction,
-    success : function(result) {
-      var position = JSON.parse(result);
-      var robot = getRobotFromColor(robotColor);
-      moveRobotToPosition(robot, direction, position, actionWhenDone);
-    }
-  });
-}
-
-function moveRobotToPosition(robot, direction, position, actionWhenDone) {
-  switch (direction) {
-  case 'North':
-  case 'South':
-    moveVertical(robot, cellYToY(position.y), actionWhenDone);
-    // if(winner){
-    // moveVertical(greenRobot, 300);
-    // }
-    // return cellYToY(position.y);
-    break;
-  case 'East':
-  case 'West':
-    moveHorizontal(robot, cellXToX(position.x), actionWhenDone);
-    // return cellXToX(position.x);
-    break;
-  }
 }
 
 function getRobotFromColor(color) {
@@ -198,94 +280,4 @@ function getColorFromRobot(robot) {
     break;
   }
   return color;
-}
-
-function moveVertical(robot, newY, actionWhenDone) {
-  // console.log("entering moveTo( " + newX + "," + newY + ")");
-  y = robot.offsetTop;
-  x = robot.offsetLeft;
-  // console.log("x,y=" + x + "," + y);
-  if (newY > y) {
-    robot.style.top = y + 2;
-    // console.log("offsetTop=" + robot.offsetTop);
-  }
-  if (newY < y) {
-    robot.style.top = y - 2;
-    // console.log("offsetTop=" + robot.offsetTop);
-  }
-  if (newY != y) {
-    setTimeout(function() {
-      moveVertical(robot, newY, actionWhenDone)
-    }, 5);
-  } else {
-    ajaxCheckForWinner(robot);
-    actionWhenDone();
-  }
-}
-
-function moveHorizontal(robot, newX, actionWhenDone) {
-  x = robot.offsetLeft;
-  if (newX > x) {
-    robot.style.left = x + 2;
-    // console.log("offsetLeft=" + robot.offsetLeft);
-  }
-  if (newX < x) {
-    robot.style.left = x - 2;
-  }
-  if (newX != x) {
-    setTimeout(function() {
-      moveHorizontal(robot, newX, actionWhenDone)
-    }, 5);
-  } else {
-    ajaxCheckForWinner(robot);
-    actionWhenDone();
-  }
-}
-
-function ajaxCheckForWinner(robot) {
-  $.ajax({
-    url : "/ricochet/robot/iswinner?robot=" + getColorFromRobot(robot),
-    success : function(result) {
-      var isWinner = JSON.parse(result);
-      if (isWinner === true) {
-        alert("YOU WON: " + result);
-      }
-    }
-  });
-}
-
-function justClicked(color) {
-  mostRecentlyClicked = color;
-}
-
-function moveRobot(posX, posY, color) {
-  var robot = getRobotFromColor(color);
-  if ((posX > robot.offsetLeft) && (posY - robot.offsetTop < 40)
-      && (posY - robot.offsetTop > 0)) {
-    ajaxMoveRobot(color, 'East');
-
-  }
-  if ((posY > robot.offsetTop) && (posX - robot.offsetLeft < 40)
-      && (posX - robot.offsetLeft > 0)) {
-    ajaxMoveRobot(color, 'South');
-  }
-  if ((posY < robot.offsetTop) && (posX - robot.offsetLeft < 40)
-      && (posX - robot.offsetLeft > 0)) {
-    ajaxMoveRobot(color, 'North');
-  }
-  if ((posX < robot.offsetLeft) && (posY - robot.offsetTop < 40)
-      && (posY - robot.offsetTop > 0)) {
-    ajaxMoveRobot(color, 'West');
-  }
-}
-
-function getPositionOnCanvas(canvas, domEvent) {
-  var rect = canvas.getBoundingClientRect();
-  var scaleX = canvas.width / rect.width;
-  var scaleY = canvas.height / rect.height;
-
-  return {
-    x : (domEvent.clientX - rect.left) * scaleX,
-    y : (domEvent.clientY - rect.top) * scaleY
-  }
 }
