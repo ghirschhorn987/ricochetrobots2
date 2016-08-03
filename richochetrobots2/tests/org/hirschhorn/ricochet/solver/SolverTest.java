@@ -17,6 +17,8 @@ import org.hirschhorn.ricochet.board.Shape;
 import org.hirschhorn.ricochet.board.Target;
 import org.hirschhorn.ricochet.game.Board;
 import org.hirschhorn.ricochet.game.BoardState;
+import org.hirschhorn.ricochet.game.Game;
+import org.hirschhorn.ricochet.game.GameFactory;
 import org.hirschhorn.ricochet.game.Move;
 import org.hirschhorn.ricochet.game.RobotPositions;
 import org.junit.Before;
@@ -76,7 +78,8 @@ public class SolverTest {
     robotPositions.setRobotPosition(Color.Red, Position.of(3, 7));
     BoardState boardState = new BoardState(target, robotPositions.build());
     
-    Solver solver = (new SolverFactory()).createSolver(0, UnprocessedMovesType.BREADTH_FIRST_SEARCH);
+    Game game = (new GameFactory()).createGame(0);
+    Solver solver = (new SolverFactory()).createSolver(game, UnprocessedMovesType.BREADTH_FIRST_SEARCH);
     MoveNode rootMove = new MoveNode(null, boardState, null);
     MoveNode actualMove = solver.createChildMoveNode(rootMove, Color.Red, Direction.North);
     Move expectedMoveAction = new Move(Color.Red, Direction.North, 2);
@@ -86,7 +89,8 @@ public class SolverTest {
   
   @Test
   public void createChildMovesShouldContainCorrectMoves() {
-    Solver solver = (new SolverFactory()).createSolver(2, UnprocessedMovesType.BREADTH_FIRST_SEARCH);
+    Game game = (new GameFactory()).createGame(2);
+    Solver solver = (new SolverFactory()).createSolver(game, UnprocessedMovesType.BREADTH_FIRST_SEARCH);
     MoveNode rootMove = solver.getRootMove();
     
     int moveNum = 1;

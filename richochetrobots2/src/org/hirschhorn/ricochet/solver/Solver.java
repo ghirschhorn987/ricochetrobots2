@@ -15,6 +15,8 @@ import org.hirschhorn.ricochet.board.Position;
 import org.hirschhorn.ricochet.board.Target;
 import org.hirschhorn.ricochet.game.Board;
 import org.hirschhorn.ricochet.game.BoardState;
+import org.hirschhorn.ricochet.game.Game;
+import org.hirschhorn.ricochet.game.GameFactory;
 import org.hirschhorn.ricochet.game.Move;
 import org.hirschhorn.ricochet.game.MoveCalculator;
 import org.hirschhorn.ricochet.game.RobotPositions;
@@ -39,16 +41,19 @@ public class Solver {
     SolverFactory solverFactory = new SolverFactory();
     UnprocessedMovesType movesType = UnprocessedMovesType.BREADTH_FIRST_SEARCH;
     
-    MoveNode previousWinner = null;
+    //MoveNode previousWinner = null;
     for (int iteration = START_ITERATION; iteration <= NUMBER_OF_ITERATIONS; iteration++) {
+      int targetIndex = iteration % 16;
+      
       logger.info("");
       logger.info("");
       logger.severe("======================================");
-      logger.severe("NEW GAME. Iteration " + iteration);  
+      logger.severe("NEW GAME. Iteration " + iteration + "  TargetIndex " + targetIndex);  
       logger.info("======================================");
       RobotPositions robotPositions = null;
 //      RobotPositions robotPositions = (previousWinner == null) ? null : previousWinner.getBoardState().getRobotPositions();
-      Solver solver = solverFactory.createSolver(iteration % 16, robotPositions, movesType);
+      Game game = (new GameFactory()).createGame(targetIndex, robotPositions);
+      Solver solver = solverFactory.createSolver(game, movesType);
       
       BoardState boardState = solver.getRootMove().getBoardState();
       logger.severe("Target: " + boardState.getChosenTarget() + " at position "
@@ -61,8 +66,9 @@ public class Solver {
         //logger.severe("Running...");
       }
       
-      List<MoveNode> winners = solver.solve();
-      previousWinner = winners.get(0);
+      solver.solve();
+      //List<MoveNode> winners = solver.solve();
+      //previousWinner = winners.get(0);
     }
   }
 

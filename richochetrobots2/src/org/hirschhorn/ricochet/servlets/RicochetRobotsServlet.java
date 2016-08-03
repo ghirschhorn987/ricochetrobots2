@@ -22,12 +22,14 @@ import org.hirschhorn.ricochet.board.Position;
 import org.hirschhorn.ricochet.board.Target;
 import org.hirschhorn.ricochet.game.Board;
 import org.hirschhorn.ricochet.game.BoardState;
+import org.hirschhorn.ricochet.game.Game;
+import org.hirschhorn.ricochet.game.GameFactory;
 import org.hirschhorn.ricochet.game.Move;
 import org.hirschhorn.ricochet.game.MoveCalculator;
 import org.hirschhorn.ricochet.game.RobotPositions;
+import org.hirschhorn.ricochet.solver.MoveNode;
 import org.hirschhorn.ricochet.solver.Solver;
 import org.hirschhorn.ricochet.solver.SolverFactory;
-import org.hirschhorn.ricochet.solver.MoveNode;
 import org.hirschhorn.ricochet.solver.UnprocessedMovesType;
 
 import com.google.gson.Gson;
@@ -57,8 +59,8 @@ public class RicochetRobotsServlet extends HttpServlet {
       case "/boardstate/get":
         doGetBoardState(request, response);
         break;
-      case "/game/play":
-        doGetPlayGame(request, response);
+      case "/game/solve":
+        doGetSolveGame(request, response);
         break;
       case "/game/start":
         doGetStartGame(request, response);
@@ -78,33 +80,31 @@ public class RicochetRobotsServlet extends HttpServlet {
 
   private void doGetStartGame(HttpServletRequest request, HttpServletResponse response) throws IOException {
     PrintWriter out = response.getWriter();
-    Solver solver = (new SolverFactory()).createSolver(0, UnprocessedMovesType.BREADTH_FIRST_SEARCH);
-    getServletContext().setAttribute("SOLVER", solver);
-    getServletContext().setAttribute("BOARD_STATE", solver.getRootMove().getBoardState());
-    out.println("Solver started.");
+    Game game = (new GameFactory()).createGame(0);
+    getServletContext().setAttribute("GAME", game);
+    out.println("Game started.");
   }
 
-  private Solver getSolver() {
-    return (Solver) getServletContext().getAttribute("SOLVER");
+  private Game getGame() {
+    return (Game) getServletContext().getAttribute("GAME");
   }
   
   private BoardState getBoardState() {
-    return (BoardState) getServletContext().getAttribute("BOARD_STATE");
+    return getGame().getBoardState();
   }
   
   private void updateBoardState(Color robot, Position newPosition) {
     RobotPositions.Builder robotPositionsBuilder = new RobotPositions.Builder(getBoardState().getRobotPositions());
     robotPositionsBuilder.setRobotPosition(robot, newPosition);
     BoardState newBoardState = new BoardState(getBoardState().getChosenTarget(), robotPositionsBuilder.build());
-    getServletContext().setAttribute("BOARD_STATE", newBoardState);
+    getGame().updateBoardState(newBoardState);
   }
   
   private void doIsWinner(HttpServletRequest request, HttpServletResponse response) throws IOException {
     PrintWriter out = response.getWriter();
     Color robot = Color.valueOf(request.getParameter("robot"));
-    Solver solver = getSolver();
     Gson gson = new Gson();
-    boolean isWinner = isWinner(robot, solver.getBoard(), getBoardState());
+    boolean isWinner = isWinner(robot, getGame().getBoard(), getBoardState());
     out.println(gson.toJson(isWinner));
   }
 
@@ -112,8 +112,7 @@ public class RicochetRobotsServlet extends HttpServlet {
     PrintWriter out = response.getWriter();
     Color robot = Color.valueOf(request.getParameter("robot"));
     Direction direction = Direction.valueOf(request.getParameter("direction"));
-    Solver solver = getSolver();
-    Position newPosition = MoveCalculator.calculateRobotPositionAfterMoving(getBoardState(), solver.getBoard(), robot, direction);
+    Position newPosition = MoveCalculator.calculateRobotPositionAfterMoving(getBoardState(), getGame().getBoard(), robot, direction);
     updateBoardState(robot, newPosition);
     Gson gson = new Gson();
     out.println(gson.toJson(newPosition));
@@ -126,17 +125,17 @@ public class RicochetRobotsServlet extends HttpServlet {
     return boardState.getRobotPosition(targetColor).equals(board.getTargetPosition(chosenTarget));
   }
 
-  private void doGetPlayGame(HttpServletRequest request, HttpServletResponse response) throws IOException {
+  private void doGetSolveGame(HttpServletRequest request, HttpServletResponse response) throws IOException {
     PrintWriter out = response.getWriter();
     response.setContentType("text/html");
-    int iteration = 0;
-    String iterationParam = request.getParameter("iteration");
-    if (iterationParam != null) {
+    int targetIndex = 0;
+    String targetIndexParam = request.getParameter("targetIndex");
+    if (targetIndexParam != null) {
       try {
-        iteration = Integer.parseInt(iterationParam);
+        targetIndex = Integer.parseInt(targetIndexParam);
       } catch (NumberFormatException e) {
         response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
-        out.println("Invalid iteration: " + iterationParam);
+        out.println("Invalid targetIndex: " + targetIndexParam);
         return;
       }
     }
@@ -147,11 +146,11 @@ public class RicochetRobotsServlet extends HttpServlet {
       movesType = UnprocessedMovesType.valueOf(movesTypeParam);
     }
     
-    SolverFactory solverFactory = new SolverFactory();
-    Solver solver = solverFactory.createSolver(iteration, movesType);
+    Game game = (new GameFactory()).createGame(targetIndex);
+    Solver solver = (new SolverFactory()).createSolver(game, movesType);
     MoveNode winningMove = solver.solve().get(0);
     response.setStatus(HttpServletResponse.SC_OK);
-    String winningMovesJsonString = getMoveActionsAsJsonString(winningMove);
+    String winningMovesJsonString = getMovesAsJsonString(winningMove);
     out.println(winningMovesJsonString);
   }
 
@@ -159,9 +158,9 @@ public class RicochetRobotsServlet extends HttpServlet {
     PrintWriter out = response.getWriter();    
     response.setContentType("text/plain");
     response.setStatus(HttpServletResponse.SC_OK);
-    Solver solver = (new SolverFactory()).createSolver(0, UnprocessedMovesType.BREADTH_FIRST_SEARCH);
+    Game game = (new GameFactory()).createGame(0);
     Gson gson = new Gson();
-    out.println(gson.toJson(solver.getBoard().getBoardItems()));
+    out.println(gson.toJson(game.getBoard().getBoardItems()));
   }
  
   private void doGetBoardState(HttpServletRequest request, HttpServletResponse response) throws IOException {
@@ -172,7 +171,7 @@ public class RicochetRobotsServlet extends HttpServlet {
     out.println(gson.toJson(getBoardState()));
   }
 
-  private String getMoveActionsAsJsonString(MoveNode moveNode) {
+  private String getMovesAsJsonString(MoveNode moveNode) {
     Gson gson = new Gson();
     List<Move> moves = new ArrayList<>();
     for (MoveNode ancestorMove : moveNode.getAncestorsFromRootDownToSelf()) {

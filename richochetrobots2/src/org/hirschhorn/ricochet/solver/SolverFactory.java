@@ -1,85 +1,13 @@
 package org.hirschhorn.ricochet.solver;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
-import org.hirschhorn.ricochet.board.BoardItem;
-import org.hirschhorn.ricochet.board.BoardSection;
-import org.hirschhorn.ricochet.board.Color;
-import org.hirschhorn.ricochet.board.Position;
-import org.hirschhorn.ricochet.board.Target;
-import org.hirschhorn.ricochet.game.Board;
-import org.hirschhorn.ricochet.game.BoardState;
-import org.hirschhorn.ricochet.game.RobotPositions;
+import org.hirschhorn.ricochet.game.Game;
 
 public class SolverFactory {
 
-  public static final int MAX_Y = 16;
-  public static final int MAX_X = 16;
-  
-  public Solver createSolver(int iteration, UnprocessedMovesType unprocessedMovesType) {
-    return createSolver(iteration, null, unprocessedMovesType);
-  }
-
-  public Solver createSolver(int iteration, RobotPositions robotPositions, UnprocessedMovesType unprocessedMovesType) {
-    Board board = new Board(createTargetsToPositions(), createBoardItems());
-    
-    if (robotPositions == null) {
-      robotPositions = createRobotsToPositions();
-    }
-    
-    MoveNode rootMove = new MoveNode(null, createInitialBoardState(iteration, robotPositions), null);
-    Solver solver = new Solver(board, rootMove, unprocessedMovesType);
+  public Solver createSolver(Game game, UnprocessedMovesType unprocessedMovesType) {
+    MoveNode rootMove = new MoveNode(null, game.getBoardState(), null);
+    Solver solver = new Solver(game.getBoard(), rootMove, unprocessedMovesType);
     return solver;
-  }
-  
-  private Map<Target, Position> createTargetsToPositions() {
-    Map<Target, Position> targetsToPosition = new HashMap<>();
-    BoardSection upperLeft = BoardSection.createBoardSectionA1();
-    BoardSection upperRight = BoardSection.createBoardSectionB1().shiftRight();
-    BoardSection bottomRight = BoardSection.createBoardSectionC1().shiftRight().shiftDown();
-    BoardSection bottomLeft = BoardSection.createBoardSectionD1().shiftDown();
-    
-    targetsToPosition.putAll(upperLeft.getTargetsToPosition());
-    targetsToPosition.putAll(upperRight.getTargetsToPosition());
-    targetsToPosition.putAll(bottomRight.getTargetsToPosition());
-    targetsToPosition.putAll(bottomLeft.getTargetsToPosition());
-
-    return targetsToPosition;
-  }
-
-  private List<BoardItem> createBoardItems() {
-    List<BoardItem> boardItems = new ArrayList<>();
-    BoardSection upperLeft = BoardSection.createBoardSectionA1();
-    BoardSection upperRight = BoardSection.createBoardSectionB1().shiftRight();
-    BoardSection bottomRight = BoardSection.createBoardSectionC1().shiftRight().shiftDown();
-    BoardSection bottomLeft = BoardSection.createBoardSectionD1().shiftDown();
-
-    boardItems.addAll(upperLeft.getBoardItems());
-    boardItems.addAll(upperRight.getBoardItems());
-    boardItems.addAll(bottomRight.getBoardItems());
-    boardItems.addAll(bottomLeft.getBoardItems());
-
-    return boardItems;
-  }
-  
-  private BoardState createInitialBoardState(int iteration, RobotPositions robotPositions) {
-    return new BoardState(chooseTarget(iteration), robotPositions);
-  }
-
-  private Target chooseTarget(int position) {
-    return Target.getTargets().get(position);
-  }
-  
-  private RobotPositions createRobotsToPositions() {
-    RobotPositions.Builder builder = new RobotPositions.Builder();
-    builder.setRobotPosition(Color.Blue, Position.of(0, 0));
-    builder.setRobotPosition(Color.Red, Position.of(0, (MAX_Y - 1)));
-    builder.setRobotPosition(Color.Green, Position.of((MAX_X - 1), 0));
-    builder.setRobotPosition(Color.Yellow, Position.of((MAX_X - 1), (MAX_Y - 1)));
-    return builder.build();
   }
 
 }

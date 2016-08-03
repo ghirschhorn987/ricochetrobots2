@@ -36,21 +36,21 @@ function ajaxStartGame() {
 
 function ajaxSolveGame() {
   writeMessage("Solving game. Please have patience...");
-  var iteration = document.getElementById("iteration").value;
+  var targetIndex = document.getElementById("targetIndex").value;
   $.ajax({
-    url : "/ricochet/game/play?iteration=" + iteration,
+    url : "/ricochet/game/solve?targetIndex=" + targetIndex,
     success : function(result) {
       writeMessage("Game solved!");
-      var moveActions = JSON.parse(result);
+      var moves = JSON.parse(result);
       var actionWhenDone = function(currentAction) {
         if (currentAction < moveActions.length) {
-          var moveAction = moveActions[currentAction];
-          ajaxMoveRobotTowardDirection(moveAction.robot, moveAction.direction, function() {
+          var move = moves[currentAction];
+          ajaxMoveRobotTowardDirection(move.robot, move.direction, function() {
             actionWhenDone(currentAction + 1)
           });
         }
       };
-      ajaxMoveRobotTowardDirection(moveActions[1].robot, moveActions[1].direction, function() {
+      ajaxMoveRobotTowardDirection(moves[1].robot, moves[1].direction, function() {
         actionWhenDone(2)
       });
     }
