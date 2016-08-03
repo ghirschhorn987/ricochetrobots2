@@ -43,7 +43,7 @@ function ajaxSolveGame() {
       writeMessage("Game solved!");
       var moves = JSON.parse(result);
       var actionWhenDone = function(currentAction) {
-        if (currentAction < moveActions.length) {
+        if (currentAction < moves.length) {
           var move = moves[currentAction];
           ajaxMoveRobotTowardDirection(move.robot, move.direction, function() {
             actionWhenDone(currentAction + 1)
