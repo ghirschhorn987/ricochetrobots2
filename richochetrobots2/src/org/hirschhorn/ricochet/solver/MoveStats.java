@@ -6,7 +6,7 @@ import java.util.logging.Logger;
 
 public class MoveStats {
 
-  private static final long PRINT_MOVE_STATS_FREQUENCY = 1000;
+  private static final long PRINT_MOVE_STATS_FREQUENCY = 10000;
 
   private static Logger logger = Logger.getLogger(MoveStats.class.getName());
 
@@ -133,9 +133,9 @@ public class MoveStats {
   }
 
   public void printWinners() {
-    logger.info("====================");
+    logger.info("-----");
     logger.info(winners.size() + " WINNERS");
-    logger.info("====================");
+    logger.info("-----");
     printMoves(winners);    
   }
   

@@ -42,6 +42,7 @@ public class Solver {
     MoveNode previousWinner = null;
     for (int iteration = START_ITERATION; iteration <= NUMBER_OF_ITERATIONS; iteration++) {
       logger.info("");
+      logger.info("");
       logger.severe("======================================");
       logger.severe("NEW GAME. Iteration " + iteration);  
       logger.info("======================================");
