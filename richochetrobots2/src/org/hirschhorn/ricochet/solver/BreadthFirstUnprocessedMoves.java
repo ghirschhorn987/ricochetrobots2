@@ -1,11 +1,11 @@
-package org.hirschhorn.ricochet;
+package org.hirschhorn.ricochet.solver;
 
 import java.util.LinkedList;
 import java.util.Queue;
 
 public class BreadthFirstUnprocessedMoves implements UnprocessedMoves {
 
-	private Queue<Move> queue;
+	private Queue<MoveNode> queue;
 
 
 	public BreadthFirstUnprocessedMoves() {
@@ -18,12 +18,12 @@ public class BreadthFirstUnprocessedMoves implements UnprocessedMoves {
 	}
 
 	@Override
-	public Move removeFirst() {
+	public MoveNode removeFirst() {
 		return queue.poll();
 	}
 
 	@Override
-	public void add(Move nextMove) {
+	public void add(MoveNode nextMove) {
 		queue.add(nextMove);
 	}
 

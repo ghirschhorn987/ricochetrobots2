@@ -1,4 +1,4 @@
-package org.hirschhorn.ricochet;
+package org.hirschhorn.ricochet.board;
 
 import java.util.ArrayList;
 import java.util.HashMap;

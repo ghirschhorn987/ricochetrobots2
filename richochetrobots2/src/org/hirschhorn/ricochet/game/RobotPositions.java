@@ -1,7 +1,10 @@
-package org.hirschhorn.ricochet;
+package org.hirschhorn.ricochet.game;
 
 import java.util.ArrayList;
 import java.util.List;
+
+import org.hirschhorn.ricochet.board.Color;
+import org.hirschhorn.ricochet.board.Position;
 
 public class RobotPositions {
 

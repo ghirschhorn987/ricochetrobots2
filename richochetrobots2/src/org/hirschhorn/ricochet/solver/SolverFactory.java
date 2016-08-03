@@ -1,29 +1,38 @@
-package org.hirschhorn.ricochet;
+package org.hirschhorn.ricochet.solver;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class GameFactory {
+import org.hirschhorn.ricochet.board.BoardItem;
+import org.hirschhorn.ricochet.board.BoardSection;
+import org.hirschhorn.ricochet.board.Color;
+import org.hirschhorn.ricochet.board.Position;
+import org.hirschhorn.ricochet.board.Target;
+import org.hirschhorn.ricochet.game.Board;
+import org.hirschhorn.ricochet.game.BoardState;
+import org.hirschhorn.ricochet.game.RobotPositions;
+
+public class SolverFactory {
 
   public static final int MAX_Y = 16;
   public static final int MAX_X = 16;
   
-  public Game createGame(int iteration, UnprocessedMovesType unprocessedMovesType) {
-    return createGame(iteration, null, unprocessedMovesType);
+  public Solver createSolver(int iteration, UnprocessedMovesType unprocessedMovesType) {
+    return createSolver(iteration, null, unprocessedMovesType);
   }
 
-  public Game createGame(int iteration, RobotPositions robotPositions, UnprocessedMovesType unprocessedMovesType) {
+  public Solver createSolver(int iteration, RobotPositions robotPositions, UnprocessedMovesType unprocessedMovesType) {
     Board board = new Board(createTargetsToPositions(), createBoardItems());
     
     if (robotPositions == null) {
       robotPositions = createRobotsToPositions();
     }
     
-    Move rootMove = new Move(null, createInitialBoardState(iteration, robotPositions), null);
-    Game game = new Game(board, rootMove, unprocessedMovesType);
-    return game;
+    MoveNode rootMove = new MoveNode(null, createInitialBoardState(iteration, robotPositions), null);
+    Solver solver = new Solver(board, rootMove, unprocessedMovesType);
+    return solver;
   }
   
   private Map<Target, Position> createTargetsToPositions() {

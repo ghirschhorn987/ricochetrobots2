@@ -1,4 +1,6 @@
-package org.hirschhorn.ricochet;
+package org.hirschhorn.ricochet.solver;
+
+import org.hirschhorn.ricochet.board.Color;
 
 public class Potential {
     
@@ -8,9 +10,9 @@ public class Potential {
 		score = 100;
 	}
 	
-	public int adjustIfMoveSameColorAsTarget(Move move){
-		Color targetColor = move.getBoardState().getChosenTarget().getColor();
-		Color moveColor = move.getMoveAction().getRobot();
+	public int adjustIfMoveSameColorAsTarget(MoveNode moveNode){
+		Color targetColor = moveNode.getBoardState().getChosenTarget().getColor();
+		Color moveColor = moveNode.getMove().getRobot();
 		if (moveColor.equals(targetColor)){
 			score = score + 5;
 		}

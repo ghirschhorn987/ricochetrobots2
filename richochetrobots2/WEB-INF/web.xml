@@ -6,7 +6,7 @@ xsi:schemaLocation="http://java.sun.com/xml/ns/javaee
 http://java.sun.com/xml/ns/javaee/web-app_2_5.xsd" version="2.5">
 <servlet>
     <servlet-name>RicochetRobotsServlet</servlet-name>
-    <servlet-class>org.hirschhorn.ricochet.servlets.RicochetRobotsServlet</servlet-class>
+    <servlet-class>org.hirschhorn.ricochet.game.servlets.RicochetRobotsServlet</servlet-class>
 </servlet>
 <servlet-mapping>
     <servlet-name>RicochetRobotsServlet</servlet-name>

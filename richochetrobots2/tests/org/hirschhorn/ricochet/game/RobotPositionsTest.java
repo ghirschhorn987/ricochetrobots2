@@ -1,7 +1,9 @@
-package org.hirschhorn.ricochet;
+package org.hirschhorn.ricochet.game;
 
 import static org.junit.Assert.assertEquals;
 
+import org.hirschhorn.ricochet.board.Position;
+import org.hirschhorn.ricochet.game.RobotPositions;
 import org.junit.Test;
 
 public class RobotPositionsTest {

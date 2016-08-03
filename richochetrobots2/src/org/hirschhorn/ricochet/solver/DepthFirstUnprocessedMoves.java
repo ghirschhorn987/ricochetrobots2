@@ -1,10 +1,10 @@
-package org.hirschhorn.ricochet;
+package org.hirschhorn.ricochet.solver;
 
 import java.util.Stack;
 
 public class DepthFirstUnprocessedMoves implements UnprocessedMoves {
 
-	private Stack<Move> stack;
+	private Stack<MoveNode> stack;
 
 
 	public DepthFirstUnprocessedMoves() {
@@ -17,12 +17,12 @@ public class DepthFirstUnprocessedMoves implements UnprocessedMoves {
 	}
 
 	@Override
-	public Move removeFirst() {
+	public MoveNode removeFirst() {
 		return stack.pop();
 	}
 
 	@Override
-	public void add(Move nextMove) {
+	public void add(MoveNode nextMove) {
 		stack.add(nextMove);
 	}
 

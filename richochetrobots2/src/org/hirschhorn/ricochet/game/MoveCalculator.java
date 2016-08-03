@@ -1,8 +1,12 @@
-package org.hirschhorn.ricochet;
+package org.hirschhorn.ricochet.game;
+
+import org.hirschhorn.ricochet.board.Color;
+import org.hirschhorn.ricochet.board.Direction;
+import org.hirschhorn.ricochet.board.Position;
 
 public class MoveCalculator {
   
-  public static Position calculateRobotPosition(BoardState boardState, Board board, Color robot, Direction direction) {
+  public static Position calculateRobotPositionAfterMoving(BoardState boardState, Board board, Color robot, Direction direction) {
     RobotPositions robotPositions = boardState.getRobotPositions();
     Position robotPosition = robotPositions.getRobotPosition(robot);
       boolean hitObject = false;

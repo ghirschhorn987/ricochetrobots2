@@ -1,4 +1,4 @@
-package org.hirschhorn.ricochet;
+package org.hirschhorn.ricochet.board;
 
 public enum Direction {
   North,

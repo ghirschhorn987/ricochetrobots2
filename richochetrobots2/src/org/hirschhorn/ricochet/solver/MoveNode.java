@@ -1,4 +1,4 @@
-package org.hirschhorn.ricochet;
+package org.hirschhorn.ricochet.solver;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -6,33 +6,38 @@ import java.util.Comparator;
 import java.util.EnumSet;
 import java.util.List;
 
-public class Move {
+import org.hirschhorn.ricochet.board.Color;
+import org.hirschhorn.ricochet.board.Target;
+import org.hirschhorn.ricochet.game.BoardState;
+import org.hirschhorn.ricochet.game.Move;
 
-  private List<Move> children;
-  private Move parent;
+public class MoveNode {
+
+  private List<MoveNode> children;
+  private MoveNode parent;
   private int depth;
   private BoardState boardState;
-  private MoveAction moveAction;
+  private Move move;
   private Potential potential;
   
   public Potential getPotential() {
 	return potential;
 }
 
-public Move(Move parent, BoardState boardState, MoveAction moveAction) {
+public MoveNode(MoveNode parent, BoardState boardState, Move move) {
     this.parent = parent;
     if (parent == null) {
       depth = 0;
     } else {
       depth = parent.getDepth() + 1;
     }
-    this.moveAction = moveAction;
+    this.move = move;
     this.boardState = boardState;
     children = new ArrayList<>();
     potential = new Potential(); 
   }
   
-  public void addChildren(List<Move> nextMoves) {
+  public void addChildren(List<MoveNode> nextMoves) {
     children.addAll(nextMoves);
   }
 
@@ -44,16 +49,16 @@ public Move(Move parent, BoardState boardState, MoveAction moveAction) {
     return depth;
   }
 
-  public List<Move> getChildren() {
+  public List<MoveNode> getChildren() {
     return children;
   }
   
-  public Move getParent(){
+  public MoveNode getParent(){
     return parent;
   }
   
-  public MoveAction getMoveAction(){
-    return moveAction;
+  public Move getMove(){
+    return move;
   }
 
   public Target getChosenTarget() {
@@ -67,10 +72,10 @@ public Move(Move parent, BoardState boardState, MoveAction moveAction) {
   public String asMovesString() {
     StringBuilder sb = new StringBuilder();
     int moveNum = 0;
-    for (Move move : getAncestorsFromRootDownToSelf()) {      
-      MoveAction moveAction = move.moveAction;
-      if (moveAction == null) {
-        sb.append(move.boardState.asRobotPositionsString());
+    for (MoveNode moveNode : getAncestorsFromRootDownToSelf()) {      
+      Move move = moveNode.move;
+      if (move == null) {
+        sb.append(moveNode.boardState.asRobotPositionsString());
       } else {
         moveNum++;
         if (moveNum == 1) {
@@ -78,23 +83,23 @@ public Move(Move parent, BoardState boardState, MoveAction moveAction) {
         } else {        
           sb.append(" --> ");
         }
-        sb.append("Move ");
+        sb.append("MoveNode ");
         sb.append(moveNum);
         sb.append(": ");
-        sb.append(moveAction.getRobot());
+        sb.append(move.getRobot());
         sb.append(" ");
-        sb.append(moveAction.getDirection());
+        sb.append(move.getDirection());
         sb.append(" to (");
-        sb.append(move.boardState.getRobotPosition(moveAction.getRobot()).asSimpleString());
+        sb.append(moveNode.boardState.getRobotPosition(move.getRobot()).asSimpleString());
         sb.append(")");
       }
     }
     return sb.toString();
   }
 
-  public List<Move> getAncestorsFromParentUp() {
-    List<Move> ancestors = new ArrayList<>();
-    Move ancestor = parent;
+  public List<MoveNode> getAncestorsFromParentUp() {
+    List<MoveNode> ancestors = new ArrayList<>();
+    MoveNode ancestor = parent;
     while (ancestor != null) {
       ancestors.add(ancestor);
       ancestor = ancestor.parent;
@@ -102,28 +107,28 @@ public Move(Move parent, BoardState boardState, MoveAction moveAction) {
     return ancestors;
   }
 
-  public List<Move> getAncestorsFromSelfUp() {
-    List<Move> ancestors = getAncestorsFromParentUp();
+  public List<MoveNode> getAncestorsFromSelfUp() {
+    List<MoveNode> ancestors = getAncestorsFromParentUp();
     ancestors.add(0, this);
     return ancestors;
   }
   
-  public List<Move> getAncestorsFromRootDownToParent() {
-    List<Move> ancestors = getAncestorsFromParentUp();
+  public List<MoveNode> getAncestorsFromRootDownToParent() {
+    List<MoveNode> ancestors = getAncestorsFromParentUp();
     Collections.reverse(ancestors);
     return ancestors;
   }
   
-  public List<Move> getAncestorsFromRootDownToSelf() {
-    List<Move> ancestors = getAncestorsFromSelfUp();
+  public List<MoveNode> getAncestorsFromRootDownToSelf() {
+    List<MoveNode> ancestors = getAncestorsFromSelfUp();
     Collections.reverse(ancestors);
     return ancestors;
   }
 
-  public static Comparator<Move> getPotentialComparator() {
-	return new Comparator<Move>(){
+  public static Comparator<MoveNode> getPotentialComparator() {
+	return new Comparator<MoveNode>(){
 		@Override
-		public int compare(Move move1, Move move2) {
+		public int compare(MoveNode move1, MoveNode move2) {
 			return move1.getPotential().compareTo(move2.getPotential());
 		}
 	};
@@ -135,9 +140,9 @@ public Move(Move parent, BoardState boardState, MoveAction moveAction) {
   
   public int numberOfColorsInPath() {
     EnumSet<Color> colors = EnumSet.noneOf(Color.class);
-    for (Move move : getAncestorsFromRootDownToSelf()) {
-      if (!move.isRoot()) {
-        colors.add(move.getMoveAction().getRobot());
+    for (MoveNode moveNode : getAncestorsFromRootDownToSelf()) {
+      if (!moveNode.isRoot()) {
+        colors.add(moveNode.getMove().getRobot());
       }
     }
     return colors.size();

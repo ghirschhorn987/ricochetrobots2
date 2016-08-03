@@ -1,12 +1,15 @@
-package org.hirschhorn.ricochet;
+package org.hirschhorn.ricochet.game;
 
-public class MoveAction {
+import org.hirschhorn.ricochet.board.Color;
+import org.hirschhorn.ricochet.board.Direction;
+
+public class Move {
 
   private Color robot;
   private Direction direction;
   private int numberOfSpaces;
   
-  public MoveAction(Color robot, Direction direction, int numberOfSpaces) {
+  public Move(Color robot, Direction direction, int numberOfSpaces) {
     this.robot = robot;
     this.direction = direction;
     this.numberOfSpaces = numberOfSpaces;
@@ -46,7 +49,7 @@ public class MoveAction {
       return false;
     if (getClass() != obj.getClass())
       return false;
-    MoveAction other = (MoveAction) obj;
+    Move other = (Move) obj;
     if (direction != other.direction)
       return false;
     if (numberOfSpaces != other.numberOfSpaces)

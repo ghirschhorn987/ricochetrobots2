@@ -1,4 +1,4 @@
-package org.hirschhorn.ricochet;
+package org.hirschhorn.ricochet.game;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -9,6 +9,12 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.hirschhorn.ricochet.board.BoardItem;
+import org.hirschhorn.ricochet.board.Color;
+import org.hirschhorn.ricochet.board.Position;
+import org.hirschhorn.ricochet.board.Shape;
+import org.hirschhorn.ricochet.board.Target;
+import org.hirschhorn.ricochet.game.Board;
 import org.junit.Before;
 import org.junit.Test;
 

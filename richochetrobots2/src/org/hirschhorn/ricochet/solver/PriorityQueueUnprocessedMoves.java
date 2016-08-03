@@ -1,14 +1,14 @@
-package org.hirschhorn.ricochet;
+package org.hirschhorn.ricochet.solver;
 
 import java.util.PriorityQueue;
 
 public class PriorityQueueUnprocessedMoves implements UnprocessedMoves {
 
-	private PriorityQueue<Move> queue;
+	private PriorityQueue<MoveNode> queue;
 
 
 	public PriorityQueueUnprocessedMoves() {
-		queue = new PriorityQueue<>(Move.getPotentialComparator());
+		queue = new PriorityQueue<>(MoveNode.getPotentialComparator());
 	}
 
 	@Override
@@ -17,12 +17,12 @@ public class PriorityQueueUnprocessedMoves implements UnprocessedMoves {
 	}
 
 	@Override
-	public Move removeFirst() {
+	public MoveNode removeFirst() {
 		return queue.poll();
 	}
 
 	@Override
-	public void add(Move nextMove) {
+	public void add(MoveNode nextMove) {
 		queue.add(nextMove);
 	}
 

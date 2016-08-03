@@ -1,4 +1,8 @@
-package org.hirschhorn.ricochet;
+package org.hirschhorn.ricochet.game;
+
+import org.hirschhorn.ricochet.board.Color;
+import org.hirschhorn.ricochet.board.Position;
+import org.hirschhorn.ricochet.board.Target;
 
 public class BoardState {
 

@@ -1,4 +1,4 @@
-package org.hirschhorn.ricochet;
+package org.hirschhorn.ricochet.solver;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -9,7 +9,17 @@ import java.util.Scanner;
 import java.util.Set;
 import java.util.logging.Logger;
 
-public class Game {
+import org.hirschhorn.ricochet.board.Color;
+import org.hirschhorn.ricochet.board.Direction;
+import org.hirschhorn.ricochet.board.Position;
+import org.hirschhorn.ricochet.board.Target;
+import org.hirschhorn.ricochet.game.Board;
+import org.hirschhorn.ricochet.game.BoardState;
+import org.hirschhorn.ricochet.game.Move;
+import org.hirschhorn.ricochet.game.MoveCalculator;
+import org.hirschhorn.ricochet.game.RobotPositions;
+
+public class Solver {
 
   private static final int NUMBER_OF_ITERATIONS = 15;
   private static final int START_ITERATION = 0;
@@ -17,8 +27,8 @@ public class Game {
   private static final int MAX_DEPTH = 15;
   private static final int MAX_WINNERS = 1;
 
-  private static Logger logger = Logger.getLogger(Game.class.getName());
-  private Move rootMove;
+  private static Logger logger = Logger.getLogger(Solver.class.getName());
+  private MoveNode rootMove;
   private Board board;
   private MoveStats moveStats;
   private Set<Integer> boardStateCache;
@@ -26,10 +36,10 @@ public class Game {
 
   public static void main(String[] args) throws IOException {
 
-    GameFactory gameFactory = new GameFactory();
+    SolverFactory solverFactory = new SolverFactory();
     UnprocessedMovesType movesType = UnprocessedMovesType.BREADTH_FIRST_SEARCH;
     
-    Move previousWinner = null;
+    MoveNode previousWinner = null;
     for (int iteration = START_ITERATION; iteration <= NUMBER_OF_ITERATIONS; iteration++) {
       logger.info("");
       logger.severe("======================================");
@@ -37,11 +47,11 @@ public class Game {
       logger.info("======================================");
       RobotPositions robotPositions = null;
 //      RobotPositions robotPositions = (previousWinner == null) ? null : previousWinner.getBoardState().getRobotPositions();
-      Game game = gameFactory.createGame(iteration % 16, robotPositions, movesType);
+      Solver solver = solverFactory.createSolver(iteration % 16, robotPositions, movesType);
       
-      BoardState boardState = game.getRootMove().getBoardState();
+      BoardState boardState = solver.getRootMove().getBoardState();
       logger.severe("Target: " + boardState.getChosenTarget() + " at position "
-              + game.getBoard().getTargetPosition(boardState.getChosenTarget())
+              + solver.getBoard().getTargetPosition(boardState.getChosenTarget())
               + ". Robots: " + boardState.asRobotPositionsString());
       
       if (PAUSE_BEFORE_PLAY) {
@@ -50,12 +60,12 @@ public class Game {
         //logger.severe("Running...");
       }
       
-      List<Move> winners = game.play();
+      List<MoveNode> winners = solver.solve();
       previousWinner = winners.get(0);
     }
   }
 
-  public Game(Board board, Move rootMove, UnprocessedMovesType unprocessedMovesType) {
+  public Solver(Board board, MoveNode rootMove, UnprocessedMovesType unprocessedMovesType) {
     this.board = board;
     this.rootMove = rootMove;
     this.unprocessedMovesType = unprocessedMovesType;
@@ -64,7 +74,7 @@ public class Game {
     boardStateCache = new HashSet<>();
   }
 
-  public Move getRootMove() {
+  public MoveNode getRootMove() {
     return rootMove;
   }
 
@@ -72,18 +82,18 @@ public class Game {
     return board;
   }
 
-  public List<Move> play() throws IOException {
+  public List<MoveNode> solve() throws IOException {
     moveStats.playStarted();
     UnprocessedMoves unprocessedMoves = UnprocessedMovesFactory.newUnprocessedMoves(unprocessedMovesType);
     unprocessedMoves.add(rootMove);
 
     while (!(unprocessedMoves.isEmpty())) {
-      Move move = unprocessedMoves.removeFirst();
-      List<Move> nextMoves = createNextMoves(move);
+      MoveNode moveNode = unprocessedMoves.removeFirst();
+      List<MoveNode> nextMoves = createNextMoveNodes(moveNode);
       
-      Iterator<Move> moveIter = nextMoves.iterator();
+      Iterator<MoveNode> moveIter = nextMoves.iterator();
       while (moveIter.hasNext()) {
-        Move nextMove = moveIter.next();
+        MoveNode nextMove = moveIter.next();
         if (isWinner(nextMove)) {
           moveStats.winnerFound(nextMove);
         } else if (shouldContinue(nextMove)) {
@@ -97,8 +107,8 @@ public class Game {
         }
       }
 
-      move.addChildren(nextMoves);
-      moveStats.moveProcessed(move, nextMoves);
+      moveNode.addChildren(nextMoves);
+      moveStats.moveProcessed(moveNode, nextMoves);
         
       if (moveStats.maxWinnersReached()) {
         unprocessedMoves.clear();
@@ -109,7 +119,7 @@ public class Game {
     return moveStats.getWinners();
   }
 
-  private boolean shouldContinue(Move nextMove) {
+  private boolean shouldContinue(MoveNode nextMove) {
     if (nextMove.getDepth() >= MAX_DEPTH) {
       return false;
     }
@@ -124,16 +134,16 @@ public class Game {
   }
 
   
-  private boolean boardStateHasPreviouslyExisted(Move move) {
-    int compressedMove = RobotPositions.compressRobotPositions(move.getBoardState().getRobotPositions());
+  private boolean boardStateHasPreviouslyExisted(MoveNode moveNode) {
+    int compressedMove = RobotPositions.compressRobotPositions(moveNode.getBoardState().getRobotPositions());
     return boardStateCache.contains(compressedMove);
   }
 
-  private boolean noRobotsHaveMoved(Move move) {
-    return move.getMoveAction().getNumberOfSpaces() == 0;
+  private boolean noRobotsHaveMoved(MoveNode moveNode) {
+    return moveNode.getMove().getNumberOfSpaces() == 0;
   }
 
-  private boolean isWinner(Move nextMove) {
+  private boolean isWinner(MoveNode nextMove) {
     BoardState boardState = nextMove.getBoardState();
     Target chosenTarget = boardState.getChosenTarget();
     Color targetColor = chosenTarget.getColor();
@@ -141,27 +151,27 @@ public class Game {
   }
 
   //@VisibleForTesting
-  List<Move> createNextMoves(Move parentMove) {
-    List<Move> nextMoves = new ArrayList<>();
+  List<MoveNode> createNextMoveNodes(MoveNode parentMove) {
+    List<MoveNode> nextMoves = new ArrayList<>();
     for (Color color : Color.values()) {
       for (Direction direction : Direction.values()) {
-        Move nextMove = createChildMove(parentMove, color, direction);
+        MoveNode nextMove = createChildMoveNode(parentMove, color, direction);
         nextMoves.add(nextMove);
       }
     }
     return nextMoves;
   }
 
-  Move createChildMove(Move parentMove, Color robot, Direction direction) {
+  MoveNode createChildMoveNode(MoveNode parentMove, Color robot, Direction direction) {
     RobotPositions robotPositions = parentMove.getBoardState().getRobotPositions();
     Position oldPosition = robotPositions.getRobotPosition(robot); 
-    Position newPosition = MoveCalculator.calculateRobotPosition(parentMove.getBoardState(), board, robot, direction);
+    Position newPosition = MoveCalculator.calculateRobotPositionAfterMoving(parentMove.getBoardState(), board, robot, direction);
     int spacesMoved = Math.abs(newPosition.getX() - oldPosition .getX()) + Math.abs(newPosition.getY() - oldPosition.getY());
     
-    MoveAction moveAction = new MoveAction(robot, direction, spacesMoved);    
+    Move move = new Move(robot, direction, spacesMoved);    
     RobotPositions newRobotPositions = (new RobotPositions.Builder(robotPositions)).setRobotPosition(robot, newPosition).build();
     BoardState childBoardState = new BoardState(parentMove.getChosenTarget(), newRobotPositions);
-    return new Move(parentMove, childBoardState, moveAction);
+    return new MoveNode(parentMove, childBoardState, move);
   }
   
 }

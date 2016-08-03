@@ -1,4 +1,4 @@
-package org.hirschhorn.ricochet;
+package org.hirschhorn.ricochet.solver;
 
 public enum UnprocessedMovesType {
   BREADTH_FIRST_SEARCH,

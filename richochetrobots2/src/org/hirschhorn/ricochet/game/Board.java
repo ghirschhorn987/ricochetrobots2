@@ -1,8 +1,13 @@
-package org.hirschhorn.ricochet;
+package org.hirschhorn.ricochet.game;
 
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+
+import org.hirschhorn.ricochet.board.BoardItem;
+import org.hirschhorn.ricochet.board.Direction;
+import org.hirschhorn.ricochet.board.Position;
+import org.hirschhorn.ricochet.board.Target;
 
 public class Board {
   
