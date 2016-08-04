@@ -20,25 +20,54 @@ function init() {
   contextBoard.fillRect(cellXToX(7), cellYToY(7), CELL_WIDTH * 2,
       CELL_HEIGHT * 2);
   ajaxBuildWalls();
+  ajaxBuildTargets();
 
   canvasBoard.addEventListener("mousedown", ajaxMoveRobotTowardCanvasClick, false);
 }
 
-function ajaxStartGame() {
+function ajaxUpdateServerFromClient(){
+  
+}
+
+function ajaxUpdateClientFromServer(){
+  
+}
+
+function ajaxBuildWalls() {
   $.ajax({
-    url : "/ricochet/game/start",
+    url : "/ricochet/board/walls/get",
+    success : function(result) {
+      var boardItems = JSON.parse(result);
+      buildWalls(boardItems);
+    }
+  });
+}
+
+function ajaxBuildTargets(){
+  $.ajax({
+    url : "/ricochet/board/targets/get",
+    success : function(result) {
+      var targetsAndPositions = JSON.parse(result);
+      buildTargets(targetsAndPositions.targets, targetsAndPositions.positions);
+    }
+  });
+}
+
+function ajaxStartGame() {
+  var targetIndex = document.getElementById("targetIndex").value;
+  $.ajax({
+    url : "/ricochet/game/start?targetIndex=" + targetIndex,
     success : function(result) {
       writeMessage(result);
-      document.getElementById("redSquare").style.visibility = "visible";
+      document.getElementById("solveGameButton").style.visibility = "visible";
     }
   });
 }
 
 function ajaxSolveGame() {
   writeMessage("Solving game. Please have patience...");
-  var targetIndex = document.getElementById("targetIndex").value;
   $.ajax({
-    url : "/ricochet/game/solve?targetIndex=" + targetIndex,
+    url : "/ricochet/game/solve",
     success : function(result) {
       writeMessage("Game solved!");
       var moves = JSON.parse(result);
@@ -91,15 +120,6 @@ function ajaxCheckForWinner(robot) {
   });
 }
 
-function ajaxBuildWalls() {
-  $.ajax({
-    url : "/ricochet/board/get",
-    success : function(result) {
-      var boardItems = JSON.parse(result);
-      buildWalls(boardItems);
-    }
-  });
-}
 
 function buildWalls(boardItems) {
   for (var i = 0; i < boardItems.length; i++) {
@@ -138,6 +158,25 @@ function buildWall(cellX, cellY, direction) {
     break;
   default:
     writeMessage("Unknown direction: " + direction);
+  }
+}
+
+function buildTargets(targets, positions){
+  var GAP = 8;
+  var svg   = document.getElementById("boardSvg");
+  var svgNS = svg.namespaceURI;
+  for (var i=0; i<targets.length; i++){
+    var target = targets[i];
+    var position = positions[i];
+//   contextBoard.fillRect(cellXToX(position.x), cellYToY(position.y), CELL_HEIGHT, CELL_WIDTH);
+    var rect = document.createElementNS(svgNS,'rect');
+    rect.setAttribute('id', target.color + "_" + target.shape);
+    rect.setAttribute('x',cellXToX(position.x) + GAP);
+    rect.setAttribute('y',cellYToY(position.y) + GAP);
+    rect.setAttribute('width',CELL_WIDTH - (GAP * 2));
+    rect.setAttribute('height',CELL_HEIGHT - (GAP * 2));
+    rect.setAttribute('fill',target.color);
+    svg.appendChild(rect);
   }
 }
 

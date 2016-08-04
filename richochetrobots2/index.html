@@ -27,16 +27,21 @@
       alt="Blue Robot" onclick="justClicked('Blue')">
   </div>
 
+  <br/><br/>
+  
   <div id="buttons">
-    <br />
-    <button onclick="ajaxStartGame()">Start game</button>
-
-    <br /> Target Position (0-15): <input id="targetIndex" type="text" />
-    <button onclick="ajaxSolveGame()">Solve game</button>
+    Target Position (0-15): <input id="targetIndex" type="text" value = "0" />
+    <button id="startGameButton" onclick="ajaxStartGame()">Start game</button>
+    <button id="solveGameButton" onclick="ajaxSolveGame()" style="visibility:hidden">Solve game</button>
     (0, 3. 13 all work relatively quickly) <br />
+    
+    <button onclick="ajaxUpdateClientFromServer()"> Update Client From Server</button>
+    <button onclick="ajaxUpdateServerFromClient()"> Update Server From Client</button>
+    
     <div id="message"></div>
 
-    <br /> <a href="/ricochet/board/get">Board Items</a>
+    <br /> <a href="/ricochet/board/walls/get">Walls</a>
+        <br /> <a href="/ricochet/board/targets/get">Targets</a>
   </div>
 </body>
 </html>

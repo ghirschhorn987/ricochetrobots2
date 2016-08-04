@@ -4,9 +4,8 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 
 import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.logging.Logger;
 
 import org.hirschhorn.ricochet.board.BoardItem;
@@ -32,7 +31,7 @@ public class SolverTest {
   
   @Before
   public void setUp() {
-    Map<Target, Position> targetsToPositions = new HashMap<>();
+    LinkedHashMap<Target, Position> targetsToPositions = new LinkedHashMap<>();
     Target target = Target.getTarget(Color.Blue, Shape.Moon);
     targetsToPositions.put(target,  Position.of(0, 5));
     

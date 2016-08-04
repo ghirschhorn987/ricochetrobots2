@@ -1,18 +1,14 @@
 package org.hirschhorn.ricochet.game;
 
 import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
 
 import org.hirschhorn.ricochet.board.BoardItem;
 import org.hirschhorn.ricochet.board.BoardSection;
 import org.hirschhorn.ricochet.board.Color;
 import org.hirschhorn.ricochet.board.Position;
 import org.hirschhorn.ricochet.board.Target;
-import org.hirschhorn.ricochet.game.Board;
-import org.hirschhorn.ricochet.game.BoardState;
-import org.hirschhorn.ricochet.game.RobotPositions;
 
 public class GameFactory {
 
@@ -35,8 +31,8 @@ public class GameFactory {
     return game;
   }
   
-  private Map<Target, Position> createTargetsToPositions() {
-    Map<Target, Position> targetsToPosition = new HashMap<>();
+  private LinkedHashMap<Target, Position> createTargetsToPositions() {
+    LinkedHashMap<Target, Position> targetsToPosition = new LinkedHashMap<>();
     BoardSection upperLeft = BoardSection.createBoardSectionA1();
     BoardSection upperRight = BoardSection.createBoardSectionB1().shiftRight();
     BoardSection bottomRight = BoardSection.createBoardSectionC1().shiftRight().shiftDown();

@@ -1,6 +1,7 @@
 package org.hirschhorn.ricochet.game;
 
 import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -11,10 +12,10 @@ import org.hirschhorn.ricochet.board.Target;
 
 public class Board {
   
-  private Map<Target, Position> targetsToPositions;
+  private LinkedHashMap<Target, Position> targetsToPositions;
   private List<BoardItem> boardItems;
   
-  public Board(Map<Target, Position> targetsToPositions, List<BoardItem> boardItems) { 
+  public Board(LinkedHashMap<Target, Position> targetsToPositions, List<BoardItem> boardItems) { 
     this.targetsToPositions = targetsToPositions;
     this.boardItems = boardItems;
   }
@@ -46,6 +47,10 @@ public class Board {
 
   public Position getTargetPosition(Target target) {
     return targetsToPositions.get(target);
+  }
+  
+  public Map<Target, Position> getTargetsToPositions(){
+    return Collections.unmodifiableMap(targetsToPositions);
   }
 
   public List<BoardItem> getBoardItems() {

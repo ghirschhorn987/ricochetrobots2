@@ -5,16 +5,14 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
 
 import org.hirschhorn.ricochet.board.BoardItem;
 import org.hirschhorn.ricochet.board.Color;
 import org.hirschhorn.ricochet.board.Position;
 import org.hirschhorn.ricochet.board.Shape;
 import org.hirschhorn.ricochet.board.Target;
-import org.hirschhorn.ricochet.game.Board;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -24,7 +22,7 @@ public class BoardTest {
   
   @Before
   public void setUp() {
-    Map<Target, Position> targetsToPositions = new HashMap<>();
+    LinkedHashMap<Target, Position> targetsToPositions = new LinkedHashMap<>();
     Target target = Target.getTarget(Color.Blue, Shape.Moon);
     targetsToPositions.put(target,  Position.of(1, 5));
     

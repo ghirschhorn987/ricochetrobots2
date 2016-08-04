@@ -2,6 +2,7 @@ package org.hirschhorn.ricochet.board;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -11,10 +12,10 @@ public class BoardSection {
   private static final int MAX_Y = 8;
   private static final int SHIFT_SIZE = 8;
   
-  private Map<Target, Position> targetsToPositions;
+  private LinkedHashMap<Target, Position> targetsToPositions;
   private List<BoardItem> boardItems;
   
-  public BoardSection(List<BoardItem> boardItems, Map<Target, Position> targetToPositions) {
+  public BoardSection(List<BoardItem> boardItems, LinkedHashMap<Target, Position> targetToPositions) {
     this.boardItems = boardItems;
     this.targetsToPositions = targetToPositions;
   }
@@ -52,7 +53,7 @@ public class BoardSection {
     get(7,6,boardItems).setSouthWall(true);
     get(7,7,boardItems).setNorthWall(true).setWestWall(true);
     
-    Map<Target, Position> targetsToPosition = new HashMap<>();
+    LinkedHashMap<Target, Position> targetsToPosition = new LinkedHashMap<>();
     targetsToPosition.put(Target.getTarget(Color.Green, Shape.Sawblade), Position.of(1, 2));
     targetsToPosition.put(Target.getTarget(Color.Red, Shape.Moon), Position.of(4, 1));
     targetsToPosition.put(Target.getTarget(Color.Blue, Shape.Planet), Position.of(3, 6));
@@ -93,7 +94,7 @@ public class BoardSection {
     get(7,4,boardItems).setSouthWall(true);
     get(7,5,boardItems).setNorthWall(true);
     
-    Map<Target, Position> targetsToPosition = new HashMap<>();
+    LinkedHashMap<Target, Position> targetsToPosition = new LinkedHashMap<>();
     targetsToPosition.put(Target.getTarget(Color.Green, Shape.Star), Position.of(1, 1));
     targetsToPosition.put(Target.getTarget(Color.Red, Shape.Planet), Position.of(2, 4));
     targetsToPosition.put(Target.getTarget(Color.Blue, Shape.Sawblade), Position.of(4, 6));
@@ -135,7 +136,7 @@ public class BoardSection {
     get(7,0,boardItems).setSouthWall(true);
     get(7,1,boardItems).setNorthWall(true);
     
-    Map<Target, Position> targetsToPosition = new HashMap<>();
+    LinkedHashMap<Target, Position> targetsToPosition = new LinkedHashMap<>();
     targetsToPosition.put(Target.getTarget(Color.Green, Shape.Planet), Position.of(2, 3));
     targetsToPosition.put(Target.getTarget(Color.Red, Shape.Star), Position.of(5, 2));
     targetsToPosition.put(Target.getTarget(Color.Blue, Shape.Moon), Position.of(1, 6));
@@ -168,6 +169,7 @@ public class BoardSection {
     get(4,4,boardItems).setSouthWall(true);
     get(4,5,boardItems).setNorthWall(true).setEastWall(true);
     get(5,0,boardItems).setWestWall(true).setSouthWall(true);
+    get(5,5,boardItems).setWestWall(true);
     get(5,1,boardItems).setNorthWall(true);
     get(5,7,boardItems).setEastWall(true);
     get(6,0,boardItems).setEastWall(true);
@@ -175,7 +177,7 @@ public class BoardSection {
     get(7,0,boardItems).setWestWall(true).setSouthWall(true);
     get(7,1,boardItems).setNorthWall(true);
 
-    Map<Target, Position> targetsToPosition = new HashMap<>();
+    LinkedHashMap<Target, Position> targetsToPosition = new LinkedHashMap<>();
     targetsToPosition.put(Target.getTarget(Color.Green, Shape.Moon), Position.of(2, 1));
     targetsToPosition.put(Target.getTarget(Color.Red, Shape.Sawblade), Position.of(1, 6));
     targetsToPosition.put(Target.getTarget(Color.Blue, Shape.Star), Position.of(4, 5));
@@ -197,13 +199,13 @@ public class BoardSection {
     return new ArrayList<>(boardItems);
   }
   
-  public Map<Target, Position> getTargetsToPosition(){
-    return new HashMap<>(targetsToPositions);
+  public LinkedHashMap<Target, Position> getTargetsToPosition(){
+    return new LinkedHashMap<>(targetsToPositions);
   }
 
   public BoardSection shiftRight() {
     List<BoardItem> shiftedBoardItems = new ArrayList<>();
-    Map<Target, Position> shiftedTargetsToPosition = new HashMap<>();
+    LinkedHashMap<Target, Position> shiftedTargetsToPosition = new LinkedHashMap<>();
     for (BoardItem boardItem : boardItems) {
       int shiftedX = boardItem.getPosition().getX() + SHIFT_SIZE;
       int y = boardItem.getPosition().getY();
@@ -224,7 +226,7 @@ public class BoardSection {
   
   public BoardSection shiftDown() {
     List<BoardItem> shiftedBoardItems = new ArrayList<>();
-    Map<Target, Position> shiftedTargetsToPosition = new HashMap<>();
+    LinkedHashMap<Target, Position> shiftedTargetsToPosition = new LinkedHashMap<>();
     for (BoardItem boardItem : boardItems) {
       int x = boardItem.getPosition().getX();
       int shiftedY = boardItem.getPosition().getY() + SHIFT_SIZE;

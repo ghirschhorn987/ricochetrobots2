@@ -10,6 +10,7 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
@@ -37,7 +38,7 @@ import com.google.gson.Gson;
 public class RicochetRobotsServlet extends HttpServlet {
 
   private static final long serialVersionUID = 153254652788906133L;
-
+  
   public void init() throws ServletException {
   }
 
@@ -53,8 +54,11 @@ public class RicochetRobotsServlet extends HttpServlet {
     
     String pathInfo = request.getPathInfo();
     switch (pathInfo) {
-      case "/board/get":
-        doGetBoard(request, response);
+      case "/board/walls/get":
+        doGetWalls(request, response);
+        break;
+      case "/board/targets/get":
+        doGetTargets(request, response);
         break;
       case "/boardstate/get":
         doGetBoardState(request, response);
@@ -80,13 +84,26 @@ public class RicochetRobotsServlet extends HttpServlet {
 
   private void doGetStartGame(HttpServletRequest request, HttpServletResponse response) throws IOException {
     PrintWriter out = response.getWriter();
-    Game game = (new GameFactory()).createGame(0);
+    int targetIndex = 0;
+    try {
+      targetIndex = getTargetIndexParam(request);
+    } catch (NumberFormatException e) {
+      response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+      out.println("Invalid targetIndex: " + e);
+      return;
+    }
+    Game game = (new GameFactory()).createGame(targetIndex);
     getServletContext().setAttribute("GAME", game);
     out.println("Game started.");
   }
 
   private Game getGame() {
-    return (Game) getServletContext().getAttribute("GAME");
+    Game game = (Game) getServletContext().getAttribute("GAME");
+    if (game == null){
+      game = (new GameFactory()).createGame(0);
+      getServletContext().setAttribute("GAME", game);
+    }
+    return game;
   }
   
   private BoardState getBoardState() {
@@ -127,40 +144,54 @@ public class RicochetRobotsServlet extends HttpServlet {
 
   private void doGetSolveGame(HttpServletRequest request, HttpServletResponse response) throws IOException {
     PrintWriter out = response.getWriter();
-    response.setContentType("text/html");
-    int targetIndex = 0;
-    String targetIndexParam = request.getParameter("targetIndex");
-    if (targetIndexParam != null) {
-      try {
-        targetIndex = Integer.parseInt(targetIndexParam);
-      } catch (NumberFormatException e) {
-        response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
-        out.println("Invalid targetIndex: " + targetIndexParam);
-        return;
-      }
-    }
-    
+    response.setContentType("text/html");    
     UnprocessedMovesType movesType = UnprocessedMovesType.BREADTH_FIRST_SEARCH;
     String movesTypeParam = request.getParameter("unprocessedMovesType");
     if (movesTypeParam != null) {
       movesType = UnprocessedMovesType.valueOf(movesTypeParam);
     }
     
-    Game game = (new GameFactory()).createGame(targetIndex);
+    Game game = getGame();
     Solver solver = (new SolverFactory()).createSolver(game, movesType);
-    MoveNode winningMove = solver.solve().get(0);
+    List<MoveNode> winningMoves = solver.solve();
     response.setStatus(HttpServletResponse.SC_OK);
-    String winningMovesJsonString = getMovesAsJsonString(winningMove);
+    String winningMovesJsonString = getMovesAsJsonString(winningMoves.get(0));
     out.println(winningMovesJsonString);
   }
 
-  private void doGetBoard(HttpServletRequest request, HttpServletResponse response) throws IOException {
+  public int getTargetIndexParam(HttpServletRequest request) {
+    int targetIndex = 0;
+    String targetIndexParam = request.getParameter("targetIndex");
+    if (targetIndexParam != null) {
+      targetIndex = Integer.parseInt(targetIndexParam);
+    }
+    return targetIndex;
+  }
+
+  private void doGetWalls(HttpServletRequest request, HttpServletResponse response) throws IOException {
     PrintWriter out = response.getWriter();    
     response.setContentType("text/plain");
     response.setStatus(HttpServletResponse.SC_OK);
-    Game game = (new GameFactory()).createGame(0);
     Gson gson = new Gson();
-    out.println(gson.toJson(game.getBoard().getBoardItems()));
+    out.println(gson.toJson(getGame().getBoard().getBoardItems()));
+  }  
+  
+  private static class TargetsAndPositions {
+    List<Target> targets = new ArrayList<>();
+    List<Position> positions = new ArrayList<>();
+  }  
+  
+  private void doGetTargets(HttpServletRequest request, HttpServletResponse response) throws IOException {
+    PrintWriter out = response.getWriter();    
+    response.setContentType("text/plain");
+    response.setStatus(HttpServletResponse.SC_OK);
+    Map<Target, Position> targetsToPositions = getGame().getBoard().getTargetsToPositions();
+    TargetsAndPositions targetsAndPositions = new TargetsAndPositions();
+    targetsAndPositions.targets = new ArrayList<>(targetsToPositions.keySet());
+    targetsAndPositions.positions = new ArrayList<>(targetsToPositions.values());
+    Gson gson = new Gson();
+    String jsonString = gson.toJson(targetsAndPositions); 
+    out.println(jsonString);
   }
  
   private void doGetBoardState(HttpServletRequest request, HttpServletResponse response) throws IOException {
