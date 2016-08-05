@@ -11,7 +11,6 @@
   <div id="board">
     <canvas id="canvasBoard" width="640" height="640"></canvas>
     <svg id="boardSvg" width="640" height="640">
-      <rect class="target" id="redSquare" width="38" height="38" />
     </svg>
 
     <img class="robot" id="redRobot" width="40" height="40"
@@ -30,14 +29,13 @@
   <br/><br/>
   
   <div id="buttons">
-    Target Position (0-15): <input id="targetIndex" type="text" value = "0" />
-    <button id="startGameButton" onclick="ajaxStartGame()">Start game</button>
+    Target: <select id="targetListBox" onclick="targetSelectedFromListBox()"></select>
     <button id="solveGameButton" onclick="ajaxSolveGame()" style="visibility:hidden">Solve game</button>
     (0, 3. 13 all work relatively quickly) <br />
     
     <button onclick="ajaxUpdateClientFromServer()"> Update Client From Server</button>
     <button onclick="ajaxUpdateServerFromClient()"> Update Server From Client</button>
-    
+        
     <div id="message"></div>
 
     <br /> <a href="/ricochet/board/walls/get">Walls</a>

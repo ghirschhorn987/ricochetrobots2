@@ -4,6 +4,9 @@ WALL_THICKNESS = 3;
 mostRecentlyClickedRobotColor = null;
 canvasBoard = null;
 contextBoard = null;
+//currentTarget = null;
+//unusedTargets = document.getElementsByClassName("target");
+totalMoves = 0;
 
 function init() {
   canvasBoard = document.getElementById("canvasBoard");
@@ -17,8 +20,10 @@ function init() {
     }
   }
 
+  //fill center with black
   contextBoard.fillRect(cellXToX(7), cellYToY(7), CELL_WIDTH * 2,
       CELL_HEIGHT * 2);
+  
   ajaxBuildWalls();
   ajaxBuildTargets();
 
@@ -30,7 +35,13 @@ function ajaxUpdateServerFromClient(){
 }
 
 function ajaxUpdateClientFromServer(){
-  
+  $.ajax({
+    url : "/ricochet/game/get",
+    success : function(result) {
+      var game = JSON.parse(result);
+//      currentTarget = game.boardState.chosenTarget;
+    }
+  });
 }
 
 function ajaxBuildWalls() {
@@ -48,18 +59,43 @@ function ajaxBuildTargets(){
     url : "/ricochet/board/targets/get",
     success : function(result) {
       var targetsAndPositions = JSON.parse(result);
-      buildTargets(targetsAndPositions.targets, targetsAndPositions.positions);
+      buildTargetsListBox(targetsAndPositions.targets, targetsAndPositions.positions);
     }
   });
 }
 
-function ajaxStartGame() {
-  var targetIndex = document.getElementById("targetIndex").value;
+//function ajaxSetTarget() {
+//  var targetIndex = document.getElementById("targetIndex").value;
+//  $.ajax({
+//    url : "/ricochet/game/target/set?targetIndex=" + targetIndex,
+//    success : function(result) {
+//      writeMessage(result);
+//      document.getElementById("solveGameButton").style.visibility = "visible";
+//      var targets = document.getElementsByClassName("target");
+//      for (var i = 0; i < targets.length; i ++){        
+//        targets[i].style.visibility = "hidden";
+//      }
+//      currentTarget = document.getElementById(targetIndexToTarget(targetIndex));
+//      currentTarget.style.visibility = "visible";
+//    }
+//  });
+//  }
+
+function ajaxSetTarget(targetColorAndShapeString) {
+  var array = targetColorAndShapeString.split(" ");
   $.ajax({
-    url : "/ricochet/game/start?targetIndex=" + targetIndex,
+    url : "/ricochet/game/target/set?color=" + array[0] + "&shape=" + array[1],
     success : function(result) {
-      writeMessage(result);
-      document.getElementById("solveGameButton").style.visibility = "visible";
+      var targetAndPosition = JSON.parse(result);
+      clearAllTargetsAndShowNewTarget(targetAndPosition);      
+//      clearCurrentTarget();
+//      buildTarget(targetAndPosition.target, targetAndPosition.position);
+//      document.getElementById("solveGameButton").style.visibility = "visible";
+//      var targets = document.getElementsByClassName("target");
+//      for (var i = 0; i < targets.length; i ++){        
+//        targets[i].style.visibility = "hidden";
+//      }
+//      document.getElementById(targetIndexToTarget(targetIndex)).style.visibility = "visible";
     }
   });
 }
@@ -114,12 +150,43 @@ function ajaxCheckForWinner(robot) {
     success : function(result) {
       var isWinner = JSON.parse(result);
       if (isWinner === true) {
-        alert("YOU WON: " + result);
+        writeMessage("CONGRATULATIONS! YOU WON: " + result);
+        ajaxChooseNewTarget();
       }
     }
   });
 }
 
+function targetSelectedFromListBox() {
+  var targetListBox = document.getElementById("targetListBox");
+  var selectedText = targetListBox.options[targetListBox.selectedIndex].text;
+  ajaxSetTarget(selectedText);
+}
+
+function ajaxChooseNewTarget() {
+  $.ajax({
+    url : "/ricochet/game/target/chooseNew",
+    success : function(result) {
+      var targetAndPosition = JSON.parse(result);
+      clearAllTargetsAndShowNewTarget(targetAndPosition);
+    }
+  });
+}
+
+// TODO: Moved logic to server to be called from ajaxChooseNewTarget
+//function chooseNewTarget(){
+//  var unusedTargets1 = unusedTargets;
+//  for(var i=0; i < unusedTargets.length - 1; i++) {
+//    console.log("" + i + " " + unusedTargets[i] + " " + currentTarget)
+//    if(unusedTargets[i] == targetIndexToTarget(currentTarget)) {
+//       unusedTargets1.splice(i, 1);
+//    }
+//  }
+//  unusedTargets = unusedTargets1;
+//  var n = Math.floor((Math.random() * unusedTargets.length) + 1);
+//  currentTarget = targetToTargetIndex(unusedTargets[n]);
+//  ajaxSetTarget(targetToTargetIndex(unusedTargets[n]));
+//}
 
 function buildWalls(boardItems) {
   for (var i = 0; i < boardItems.length; i++) {
@@ -161,22 +228,47 @@ function buildWall(cellX, cellY, direction) {
   }
 }
 
-function buildTargets(targets, positions){
+function buildTargetsListBox(targets, positions){
+  var targetListBox = document.getElementById("targetListBox");
+  for (var i=0; i<targets.length; i++){
+    var target = targets[i];
+    var targetOption = document.createElement('option');
+    targetOption.text = target.color + " " + target.shape;
+    targetListBox.add(targetOption); 
+  }
+}
+
+function clearAllTargetsAndShowNewTarget(targetAndPosition) {
+  clearAllTargets();
+  buildTarget(targetAndPosition.target, targetAndPosition.position);
+  document.getElementById("solveGameButton").style.visibility = "visible";
+}
+
+function buildTarget(target, position) {
+  //contextBoard.fillRect(cellXToX(position.x), cellYToY(position.y), CELL_HEIGHT, CELL_WIDTH);
   var GAP = 8;
   var svg   = document.getElementById("boardSvg");
   var svgNS = svg.namespaceURI;
-  for (var i=0; i<targets.length; i++){
-    var target = targets[i];
-    var position = positions[i];
-//   contextBoard.fillRect(cellXToX(position.x), cellYToY(position.y), CELL_HEIGHT, CELL_WIDTH);
-    var rect = document.createElementNS(svgNS,'rect');
-    rect.setAttribute('id', target.color + "_" + target.shape);
-    rect.setAttribute('x',cellXToX(position.x) + GAP);
-    rect.setAttribute('y',cellYToY(position.y) + GAP);
-    rect.setAttribute('width',CELL_WIDTH - (GAP * 2));
-    rect.setAttribute('height',CELL_HEIGHT - (GAP * 2));
-    rect.setAttribute('fill',target.color);
-    svg.appendChild(rect);
+  
+  var rect = document.createElementNS(svgNS,'rect');
+  rect.setAttribute('id', target.color.charAt(0) + "_" + target.shape.substring(0,2));
+  rect.setAttribute('class', "target");
+  rect.setAttribute('x',cellXToX(position.x) + GAP);
+  rect.setAttribute('y',cellYToY(position.y) + GAP);
+  rect.setAttribute('width',CELL_WIDTH - (GAP * 2));
+  rect.setAttribute('height',CELL_HEIGHT - (GAP * 2));
+  rect.setAttribute('fill',target.color);
+  rect.setAttribute('color', target.color);
+  rect.setAttribute('shape', target.shape);
+//  rect.style.visibility = 'hidden';
+  svg.appendChild(rect);
+}
+
+function clearAllTargets(){
+  var svg = document.getElementById("boardSvg");
+  var targets = document.getElementsByClassName("target");
+  for (var i = 0; i < targets.length; i++) {
+    svg.removeChild(targets[i]);    
   }
 }
 
@@ -191,6 +283,8 @@ function moveRobotToPosition(robot, direction, position, actionWhenDone) {
     moveHorizontal(robot, cellXToX(position.x), actionWhenDone);
     break;
   }
+  totalMoves++;
+  writeMessage(totalMoves);
 }
 
 function moveVertical(robot, newY, actionWhenDone) {
@@ -328,3 +422,66 @@ function getColorFromRobot(robot) {
   }
   return color;
 }
+
+//function targetIndexToTarget(targetIndex){
+//  var shape;
+//  var color;
+//  if (targetIndex < 4){
+//    color = "R";
+//  }
+//  if (targetIndex > 3 && targetIndex < 8){
+//    color = "Y";
+//  }
+//  if (targetIndex > 7  && targetIndex < 12){
+//    color = "G";
+//  }
+//  if (targetIndex > 11){
+//    color = "B";
+//  }
+//  if (targetIndex % 4 === 0) {
+//    shape = "St"
+//  }
+//  if (targetIndex % 4 === 1) {
+//    shape = "Pl"
+//  }
+//  if (targetIndex % 4 === 2) {
+//    shape = "Mo"
+//  }
+//  if (targetIndex % 4 === 3) {
+//    shape = "Sa"
+//  }
+//  
+//  return color + "_" + shape;
+//}
+//
+//function targetToTargetIndex(target) {
+//  var targetIndex = 0;
+//  var targetName = target.getAttribute('id');
+//  var substring = targetName.substring(2,4);
+//  var firstLetter = targetName.charAt(0);
+//  if(firstLetter == 'R') {
+//    targetIndex = targetIndex + 3;
+//  }
+//  if(firstLetter == 'Y') {
+//    targetIndex = targetIndex + 7;
+//  }
+//  if(firstLetter == 'G') {
+//    targetIndex = targetIndex + 11;
+//  }
+//  if(firstLetter == 'B') {
+//    targetIndex = targetIndex + 15;
+//  }
+//  if(substring == 'St') {
+//    targetIndex = targetIndex - 3;
+//  }
+//  if(substring == 'Pl') {
+//    targetIndex = targetIndex - 2;
+//  }
+//  if(substring == 'Mo') {
+//    targetIndex = targetIndex - 1;
+//  }
+//  return targetIndex;
+//}
+
+
+

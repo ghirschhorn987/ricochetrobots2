@@ -20,6 +20,7 @@ import javax.servlet.http.HttpServletResponse;
 import org.hirschhorn.ricochet.board.Color;
 import org.hirschhorn.ricochet.board.Direction;
 import org.hirschhorn.ricochet.board.Position;
+import org.hirschhorn.ricochet.board.Shape;
 import org.hirschhorn.ricochet.board.Target;
 import org.hirschhorn.ricochet.game.Board;
 import org.hirschhorn.ricochet.game.BoardState;
@@ -35,13 +36,28 @@ import org.hirschhorn.ricochet.solver.UnprocessedMovesType;
 
 import com.google.gson.Gson;
 
+
 public class RicochetRobotsServlet extends HttpServlet {
 
   private static final long serialVersionUID = 153254652788906133L;
   
   public void init() throws ServletException {
+    initializeGame(0);
   }
 
+  private void initializeGame(int targetIndex) {
+    Game game = (new GameFactory()).createGame(targetIndex);
+    getServletContext().setAttribute("GAME", game);
+  }
+  
+  private Game getGame() {
+    return (Game) getServletContext().getAttribute("GAME");
+  }
+  
+  private BoardState getBoardState() {
+    return getGame().getBoardState();
+  }
+  
   public void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
 //    See http://codebox.org.uk/pages/java-servlet-url-parts   
 //    PrintWriter out = response.getWriter();
@@ -60,15 +76,20 @@ public class RicochetRobotsServlet extends HttpServlet {
       case "/board/targets/get":
         doGetTargets(request, response);
         break;
+      case "/game/get":
+        doGetGame(request, response);
+        break;
       case "/boardstate/get":
         doGetBoardState(request, response);
         break;
       case "/game/solve":
         doGetSolveGame(request, response);
         break;
-      case "/game/start":
-        doGetStartGame(request, response);
+      case "/game/target/set":
+        doGetSetTarget(request, response);
         break;
+      case "/game/target/chooseNew":
+        doGetChooseNewTarget(request, response);
       case "/robot/move":
         doMoveRobot(request, response);
         break;
@@ -81,33 +102,51 @@ public class RicochetRobotsServlet extends HttpServlet {
         response.getWriter().print("Unrecognized request: " + request.getRequestURI());        
     }
   }
-
-  private void doGetStartGame(HttpServletRequest request, HttpServletResponse response) throws IOException {
+  
+  private void doGetSetTarget(HttpServletRequest request, HttpServletResponse response) throws IOException {
     PrintWriter out = response.getWriter();
-    int targetIndex = 0;
-    try {
-      targetIndex = getTargetIndexParam(request);
-    } catch (NumberFormatException e) {
-      response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
-      out.println("Invalid targetIndex: " + e);
-      return;
-    }
-    Game game = (new GameFactory()).createGame(targetIndex);
-    getServletContext().setAttribute("GAME", game);
-    out.println("Game started.");
+    Color color = Color.valueOf(request.getParameter("color"));
+    Shape shape = Shape.valueOf(request.getParameter("shape"));
+    Target target = Target.getTarget(color, shape);
+    getGame().getBoardState().setChosenTarget(target);
+
+    Gson gson = new Gson();
+    out.println(gson.toJson(getTargetAndPosition(target))); 
   }
 
-  private Game getGame() {
-    Game game = (Game) getServletContext().getAttribute("GAME");
-    if (game == null){
-      game = (new GameFactory()).createGame(0);
-      getServletContext().setAttribute("GAME", game);
-    }
-    return game;
+  private void doGetChooseNewTarget(HttpServletRequest request, HttpServletResponse response) throws IOException {
+    
+    //var unusedTargets1 = unusedTargets;
+    //for(var i=0; i < unusedTargets.length - 1; i++) {
+    //  console.log("" + i + " " + unusedTargets[i] + " " + currentTarget)
+    //  if(unusedTargets[i] == targetIndexToTarget(currentTarget)) {
+    //     unusedTargets1.splice(i, 1);
+    //  }
+    //}
+    //unusedTargets = unusedTargets1;
+    //var n = Math.floor((Math.random() * unusedTargets.length) + 1);
+    //currentTarget = targetToTargetIndex(unusedTargets[n]);
+    //ajaxSetTarget(targetToTargetIndex(unusedTargets[n]));
+
+    List<Target> unusedTargets = Target.getTargets();
+    int n = (int) Math.floor((Math.random() * unusedTargets.size()) + 1);
+    Target target = unusedTargets.get(n);
+    
+    PrintWriter out = response.getWriter();
+    Gson gson = new Gson();
+    out.println(gson.toJson(getTargetAndPosition(target)));    
   }
   
-  private BoardState getBoardState() {
-    return getGame().getBoardState();
+  private static class TargetAndPosition{
+    private Target target;
+    private Position position;
+  }
+  
+  private TargetAndPosition getTargetAndPosition(Target target) {
+    TargetAndPosition targetAndPosition = new TargetAndPosition();
+    targetAndPosition.position = getGame().getBoard().getTargetPosition(target);
+    targetAndPosition.target = target;
+    return targetAndPosition;
   }
   
   private void updateBoardState(Color robot, Position newPosition) {
@@ -177,8 +216,9 @@ public class RicochetRobotsServlet extends HttpServlet {
   }  
   
   private static class TargetsAndPositions {
-    List<Target> targets = new ArrayList<>();
-    List<Position> positions = new ArrayList<>();
+    private List<Target> targets = new ArrayList<>();
+    private List<Position> positions = new ArrayList<>();
+    private List<Integer> targetIndex = new ArrayList<>();
   }  
   
   private void doGetTargets(HttpServletRequest request, HttpServletResponse response) throws IOException {
@@ -191,6 +231,15 @@ public class RicochetRobotsServlet extends HttpServlet {
     targetsAndPositions.positions = new ArrayList<>(targetsToPositions.values());
     Gson gson = new Gson();
     String jsonString = gson.toJson(targetsAndPositions); 
+    out.println(jsonString);
+  }
+  
+  private void doGetGame(HttpServletRequest request, HttpServletResponse response) throws IOException {
+    PrintWriter out = response.getWriter();    
+    response.setContentType("text/plain");
+    response.setStatus(HttpServletResponse.SC_OK);
+    Gson gson = new Gson();
+    String jsonString = gson.toJson(getGame()); 
     out.println(jsonString);
   }
  
@@ -210,7 +259,7 @@ public class RicochetRobotsServlet extends HttpServlet {
     }
     return gson.toJson(moves);
   }
-
+  
   
   public void destroy() {
   }

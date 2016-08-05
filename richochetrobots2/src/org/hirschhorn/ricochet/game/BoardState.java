@@ -36,4 +36,8 @@ public class BoardState {
     return robotPositions.toString();
   }
 
+  public void setChosenTarget(Target target) {
+    this.chosenTarget = target;
+  }
+
 }

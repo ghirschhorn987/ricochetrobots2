@@ -17,9 +17,6 @@
  z-index: 1;
 }
 
-.target {
- visibility: hidden
-}
 
 #redSquare {
  fill: rgb(225, 0, 0);
