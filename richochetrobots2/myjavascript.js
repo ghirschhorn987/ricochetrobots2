@@ -64,6 +64,24 @@ function ajaxBuildTargets(){
   });
 }
 
+function ajaxGetBoardState() {
+  $.ajax({
+    url : "/ricochet/boardstate/get",
+    success : function(result) {
+      var boardState = JSON.parse(result);
+      var target = boardState.chosenTarget;
+      var robotPositions = boardState.robotPositions;
+      writeMessage(
+          "Target: " + target.color + " " + target.shape
+              + "   Red: " + robotPositions.positions[0].x + "," + robotPositions.positions[0].y
+              + "   Yellow: " + robotPositions.positions[1].x + "," + robotPositions.positions[1].y
+              + "   Green: " + robotPositions.positions[2].x + "," + robotPositions.positions[2].y
+              + "   Blue: " + robotPositions.positions[3].x + "," + robotPositions.positions[3].y
+              );
+    }
+  });
+}
+
 //function ajaxSetTarget() {
 //  var targetIndex = document.getElementById("targetIndex").value;
 //  $.ajax({
@@ -169,9 +187,11 @@ function ajaxChooseNewTarget() {
     success : function(result) {
       var targetAndPosition = JSON.parse(result);
       clearAllTargetsAndShowNewTarget(targetAndPosition);
+      ajaxGetBoardState();
     }
   });
 }
+
 
 // TODO: Moved logic to server to be called from ajaxChooseNewTarget
 //function chooseNewTarget(){
