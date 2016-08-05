@@ -90,6 +90,7 @@ public class RicochetRobotsServlet extends HttpServlet {
         break;
       case "/game/target/chooseNew":
         doGetChooseNewTarget(request, response);
+        break;
       case "/robot/move":
         doMoveRobot(request, response);
         break;
