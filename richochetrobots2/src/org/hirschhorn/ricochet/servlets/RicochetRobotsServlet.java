@@ -38,7 +38,7 @@ import com.google.gson.Gson;
 
 
 public class RicochetRobotsServlet extends HttpServlet {
-
+ 
   private static final long serialVersionUID = 153254652788906133L;
   
   public void init() throws ServletException {
@@ -48,10 +48,19 @@ public class RicochetRobotsServlet extends HttpServlet {
   private void initializeGame(int targetIndex) {
     Game game = (new GameFactory()).createGame(targetIndex);
     getServletContext().setAttribute("GAME", game);
+    getServletContext().setAttribute("HAS_CHANGED", false);
   }
   
   private Game getGame() {
     return (Game) getServletContext().getAttribute("GAME");
+  }
+  
+  private boolean getHasChanged(){
+    return (boolean) getServletContext().getAttribute("HAS_CHANGED");
+  }
+  
+  private void setHasChanged(boolean value){
+    getServletContext().setAttribute("HAS_CHANGED", value);
   }
   
   private BoardState getBoardState() {
@@ -70,6 +79,9 @@ public class RicochetRobotsServlet extends HttpServlet {
     
     String pathInfo = request.getPathInfo();
     switch (pathInfo) {
+      case "/getlatestchanges":
+        doGetLastestChanges(request, response);
+        break;
       case "/board/walls/get":
         doGetWalls(request, response);
         break;
@@ -104,6 +116,12 @@ public class RicochetRobotsServlet extends HttpServlet {
     }
   }
   
+  private void doGetLastestChanges(HttpServletRequest request, HttpServletResponse response) throws InterruptedException {
+    while (!getHasChanged()){
+      Thread.sleep(100);
+    }
+  }
+
   private void doGetSetTarget(HttpServletRequest request, HttpServletResponse response) throws IOException {
     PrintWriter out = response.getWriter();
     Color color = Color.valueOf(request.getParameter("color"));
@@ -128,11 +146,12 @@ public class RicochetRobotsServlet extends HttpServlet {
     //var n = Math.floor((Math.random() * unusedTargets.length) + 1);
     //currentTarget = targetToTargetIndex(unusedTargets[n]);
     //ajaxSetTarget(targetToTargetIndex(unusedTargets[n]));
-
-    List<Target> unusedTargets = Target.getTargets();
+    getGame().removeTarget(getGame().getBoardState().getChosenTarget());
+    List<Target> unusedTargets = getGame().getUnusedTargets();
+    
     int n = (int) Math.floor((Math.random() * unusedTargets.size()) + 1);
     Target target = unusedTargets.get(n);
-    
+    getGame().getBoardState().setChosenTarget(target);
     PrintWriter out = response.getWriter();
     Gson gson = new Gson();
     out.println(gson.toJson(getTargetAndPosition(target)));    

@@ -30,6 +30,20 @@ function init() {
   canvasBoard.addEventListener("mousedown", ajaxMoveRobotTowardCanvasClick, false);
 }
 
+function ajaxGetLatestChangesFromServer(){
+  $.ajax({
+    url : "/ricochet/getlatestchanges",
+    success : function(result) {
+      var date = new Date();
+      var dateString = date.getHours() + ":" + date.getMinutes() + ":" + date.getSeconds();
+      appendMessage(dateString + "  " + result);     
+    }
+  });
+  setTimeout(ajaxGetLatestChangesFromServer(), 10);
+}
+
+ 
+
 function ajaxUpdateServerFromClient(){
   
 }
@@ -105,7 +119,7 @@ function ajaxSetTarget(targetColorAndShapeString) {
     url : "/ricochet/game/target/set?color=" + array[0] + "&shape=" + array[1],
     success : function(result) {
       var targetAndPosition = JSON.parse(result);
-      clearAllTargetsAndShowNewTarget(targetAndPosition);      
+      clearAllTargetsAndShowNewTarget(targetAndPosition);
 //      clearCurrentTarget();
 //      buildTarget(targetAndPosition.target, targetAndPosition.position);
 //      document.getElementById("solveGameButton").style.visibility = "visible";
@@ -167,7 +181,7 @@ function ajaxCheckForWinner(robot) {
     url : "/ricochet/robot/iswinner?robot=" + getColorFromRobot(robot),
     success : function(result) {
       var isWinner = JSON.parse(result);
-      if (isWinner === true) {
+      if (isWinner == true) {
         writeMessage("CONGRATULATIONS! YOU WON: " + result);
         ajaxChooseNewTarget();
       }
@@ -353,6 +367,12 @@ function justClicked(robotColor) {
 
 function writeMessage(message) {
   document.getElementById("message").innerHTML = message;
+}
+
+
+function appendMessage(message) {
+  var currentMessage = document.getElementById("message").innerHTML;
+  document.getElementById("message").innerHTML = currentMessage + "<br>" + message;
 }
 
 function getPositionOnCanvas(canvas, domEvent) {
