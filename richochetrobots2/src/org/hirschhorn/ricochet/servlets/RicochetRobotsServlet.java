@@ -74,22 +74,10 @@ public class RicochetRobotsServlet extends HttpServlet {
   @Override
   public void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
 //    See http://codebox.org.uk/pages/java-servlet-url-parts   
-//    PrintWriter out = response.getWriter();
-//    out.println("url: " + request.getRequestURI());
-//    out.println("contextPath: " + request.getContextPath());
-//    out.println("servletPath: " + request.getServletPath());
-//    out.println("pathInfo: " + request.getPathInfo());
-//    out.println("pathTranslated: " + request.getPathTranslated());
-//    out.println("queryString: " + request.getQueryString());
-    
     String pathInfo = request.getPathInfo();
     switch (pathInfo) {
       case "/getlatestchanges":
-        try {
-          doGetLastestChanges(request, response);
-        } catch (InterruptedException e) {
-          throw new ServletException(e);
-        }
+        doGetLatestChanges(request, response);
         break;
       case "/board/walls/get":
         doGetWalls(request, response);
@@ -125,10 +113,15 @@ public class RicochetRobotsServlet extends HttpServlet {
     }
   }
   
-  private void doGetLastestChanges(HttpServletRequest request, HttpServletResponse response) throws InterruptedException, IOException {
+  private void doGetLatestChanges(HttpServletRequest request, HttpServletResponse response) throws IOException {
     int version = Integer.valueOf(request.getParameter("version"));
-    while (!getHasChangedSince(version)){
-      Thread.sleep(100);
+    long startTime = System.currentTimeMillis();
+    while (!getHasChangedSince(version) && (System.currentTimeMillis() - startTime) < 10000) {
+      try {
+        Thread.sleep(250);
+      } catch (InterruptedException e) {
+        Thread.currentThread().interrupt();
+      }
     }
     PrintWriter out = response.getWriter();
     out.println(getCurrentVersion());

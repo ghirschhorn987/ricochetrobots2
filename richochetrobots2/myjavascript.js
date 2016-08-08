@@ -4,8 +4,6 @@ WALL_THICKNESS = 3;
 mostRecentlyClickedRobotColor = null;
 canvasBoard = null;
 contextBoard = null;
-//currentTarget = null;
-//unusedTargets = document.getElementsByClassName("target");
 totalMoves = 0;
 currentVersion = 0;
 
@@ -37,10 +35,17 @@ function ajaxGetLatestChangesFromServer(){
   $.ajax({
     url : "/ricochet/getlatestchanges?version=" + currentVersion,
     success : function(result) {
-      currentVersion = result;
+      var message;
+      if (result != currentVersion) {
+        currentVersion = result;
+        message = "New current version: " + currentVersion;
+      } else {
+        message = "No version change";
+      }
+       
       var date = new Date();
       var dateString = date.getHours() + ":" + date.getMinutes() + ":" + date.getSeconds();
-      appendMessage(dateString + "  " + result); 
+      appendMessage(dateString + "  " + message); 
       setTimeout(ajaxGetLatestChangesFromServer, 10);
     }
   });
@@ -52,10 +57,9 @@ function ajaxUpdateServerFromClient(){
 
 function ajaxUpdateClientFromServer(){
   $.ajax({
-    url : "/ricochet/game/get",
+    url : "/ricochet/boardstate/get",
     success : function(result) {
-      var game = JSON.parse(result);
-//      currentTarget = game.boardState.chosenTarget;
+      writeMessage("updateClientFromServer is not yet implemented. server boardState=" + result);
     }
   });
 }
@@ -98,23 +102,6 @@ function ajaxGetBoardState() {
   });
 }
 
-//function ajaxSetTarget() {
-//  var targetIndex = document.getElementById("targetIndex").value;
-//  $.ajax({
-//    url : "/ricochet/game/target/set?targetIndex=" + targetIndex,
-//    success : function(result) {
-//      writeMessage(result);
-//      document.getElementById("solveGameButton").style.visibility = "visible";
-//      var targets = document.getElementsByClassName("target");
-//      for (var i = 0; i < targets.length; i ++){        
-//        targets[i].style.visibility = "hidden";
-//      }
-//      currentTarget = document.getElementById(targetIndexToTarget(targetIndex));
-//      currentTarget.style.visibility = "visible";
-//    }
-//  });
-//  }
-
 function ajaxSetTarget(targetColorAndShapeString) {
   var array = targetColorAndShapeString.split(" ");
   $.ajax({
@@ -122,14 +109,6 @@ function ajaxSetTarget(targetColorAndShapeString) {
     success : function(result) {
       var targetAndPosition = JSON.parse(result);
       clearAllTargetsAndShowNewTarget(targetAndPosition);
-//      clearCurrentTarget();
-//      buildTarget(targetAndPosition.target, targetAndPosition.position);
-//      document.getElementById("solveGameButton").style.visibility = "visible";
-//      var targets = document.getElementsByClassName("target");
-//      for (var i = 0; i < targets.length; i ++){        
-//        targets[i].style.visibility = "hidden";
-//      }
-//      document.getElementById(targetIndexToTarget(targetIndex)).style.visibility = "visible";
     }
   });
 }
@@ -207,22 +186,6 @@ function ajaxChooseNewTarget() {
     }
   });
 }
-
-
-// TODO: Moved logic to server to be called from ajaxChooseNewTarget
-//function chooseNewTarget(){
-//  var unusedTargets1 = unusedTargets;
-//  for(var i=0; i < unusedTargets.length - 1; i++) {
-//    console.log("" + i + " " + unusedTargets[i] + " " + currentTarget)
-//    if(unusedTargets[i] == targetIndexToTarget(currentTarget)) {
-//       unusedTargets1.splice(i, 1);
-//    }
-//  }
-//  unusedTargets = unusedTargets1;
-//  var n = Math.floor((Math.random() * unusedTargets.length) + 1);
-//  currentTarget = targetToTargetIndex(unusedTargets[n]);
-//  ajaxSetTarget(targetToTargetIndex(unusedTargets[n]));
-//}
 
 function buildWalls(boardItems) {
   for (var i = 0; i < boardItems.length; i++) {
@@ -368,13 +331,12 @@ function justClicked(robotColor) {
 }
 
 function writeMessage(message) {
- // document.getElementById("message").innerHTML = message;
+  document.getElementById("message").innerHTML = message;
 }
 
-
 function appendMessage(message) {
-  var currentMessage = document.getElementById("message").innerHTML;
-  document.getElementById("message").innerHTML = currentMessage + "<br>" + message;
+  var currentMessage = document.getElementById("updates").innerHTML;
+  document.getElementById("updates").innerHTML = currentMessage + "<br>" + message;
 }
 
 function getPositionOnCanvas(canvas, domEvent) {
@@ -464,66 +426,3 @@ function getColorFromRobot(robot) {
   }
   return color;
 }
-
-//function targetIndexToTarget(targetIndex){
-//  var shape;
-//  var color;
-//  if (targetIndex < 4){
-//    color = "R";
-//  }
-//  if (targetIndex > 3 && targetIndex < 8){
-//    color = "Y";
-//  }
-//  if (targetIndex > 7  && targetIndex < 12){
-//    color = "G";
-//  }
-//  if (targetIndex > 11){
-//    color = "B";
-//  }
-//  if (targetIndex % 4 === 0) {
-//    shape = "St"
-//  }
-//  if (targetIndex % 4 === 1) {
-//    shape = "Pl"
-//  }
-//  if (targetIndex % 4 === 2) {
-//    shape = "Mo"
-//  }
-//  if (targetIndex % 4 === 3) {
-//    shape = "Sa"
-//  }
-//  
-//  return color + "_" + shape;
-//}
-//
-//function targetToTargetIndex(target) {
-//  var targetIndex = 0;
-//  var targetName = target.getAttribute('id');
-//  var substring = targetName.substring(2,4);
-//  var firstLetter = targetName.charAt(0);
-//  if(firstLetter == 'R') {
-//    targetIndex = targetIndex + 3;
-//  }
-//  if(firstLetter == 'Y') {
-//    targetIndex = targetIndex + 7;
-//  }
-//  if(firstLetter == 'G') {
-//    targetIndex = targetIndex + 11;
-//  }
-//  if(firstLetter == 'B') {
-//    targetIndex = targetIndex + 15;
-//  }
-//  if(substring == 'St') {
-//    targetIndex = targetIndex - 3;
-//  }
-//  if(substring == 'Pl') {
-//    targetIndex = targetIndex - 2;
-//  }
-//  if(substring == 'Mo') {
-//    targetIndex = targetIndex - 1;
-//  }
-//  return targetIndex;
-//}
-
-
-

@@ -10,7 +10,6 @@ public class Target {
   private final Color color;
   private final Shape shape;
   
-  
   private Target(Color color, Shape shape) {
     this.color = color;
     this.shape = shape;
