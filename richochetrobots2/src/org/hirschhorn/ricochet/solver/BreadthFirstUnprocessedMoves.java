@@ -7,7 +7,6 @@ public class BreadthFirstUnprocessedMoves implements UnprocessedMoves {
 
 	private Queue<MoveNode> queue;
 
-
 	public BreadthFirstUnprocessedMoves() {
 		queue = new LinkedList<>();
 	}
