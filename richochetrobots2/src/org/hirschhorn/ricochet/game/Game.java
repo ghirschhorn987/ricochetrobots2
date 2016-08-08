@@ -1,10 +1,11 @@
 package org.hirschhorn.ricochet.game;
 
+import java.io.Serializable;
 import java.util.List;
 
 import org.hirschhorn.ricochet.board.Target;
 
-public class Game {
+public class Game implements Serializable {
   
   private Board board;
   private BoardState boardState;

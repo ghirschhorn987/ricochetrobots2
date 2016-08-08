@@ -48,25 +48,30 @@ public class RicochetRobotsServlet extends HttpServlet {
   private void initializeGame(int targetIndex) {
     Game game = (new GameFactory()).createGame(targetIndex);
     getServletContext().setAttribute("GAME", game);
-    getServletContext().setAttribute("HAS_CHANGED", false);
+    getServletContext().setAttribute("CURRENT_VERSION", 0);
   }
   
   private Game getGame() {
     return (Game) getServletContext().getAttribute("GAME");
   }
   
-  private boolean getHasChanged(){
-    return (boolean) getServletContext().getAttribute("HAS_CHANGED");
+  private int getCurrentVersion() {
+    return (int) getServletContext().getAttribute("CURRENT_VERSION");    
   }
   
-  private void setHasChanged(boolean value){
-    getServletContext().setAttribute("HAS_CHANGED", value);
+  private boolean getHasChangedSince(int version) {
+    return getCurrentVersion() > version;
+  }
+  
+  private void setHasChanged() {
+    getServletContext().setAttribute("CURRENT_VERSION", getCurrentVersion() + 1);
   }
   
   private BoardState getBoardState() {
     return getGame().getBoardState();
   }
   
+  @Override
   public void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
 //    See http://codebox.org.uk/pages/java-servlet-url-parts   
 //    PrintWriter out = response.getWriter();
@@ -80,7 +85,11 @@ public class RicochetRobotsServlet extends HttpServlet {
     String pathInfo = request.getPathInfo();
     switch (pathInfo) {
       case "/getlatestchanges":
-        doGetLastestChanges(request, response);
+        try {
+          doGetLastestChanges(request, response);
+        } catch (InterruptedException e) {
+          throw new ServletException(e);
+        }
         break;
       case "/board/walls/get":
         doGetWalls(request, response);
@@ -116,10 +125,13 @@ public class RicochetRobotsServlet extends HttpServlet {
     }
   }
   
-  private void doGetLastestChanges(HttpServletRequest request, HttpServletResponse response) throws InterruptedException {
-    while (!getHasChanged()){
+  private void doGetLastestChanges(HttpServletRequest request, HttpServletResponse response) throws InterruptedException, IOException {
+    int version = Integer.valueOf(request.getParameter("version"));
+    while (!getHasChangedSince(version)){
       Thread.sleep(100);
     }
+    PrintWriter out = response.getWriter();
+    out.println(getCurrentVersion());
   }
 
   private void doGetSetTarget(HttpServletRequest request, HttpServletResponse response) throws IOException {
@@ -128,7 +140,7 @@ public class RicochetRobotsServlet extends HttpServlet {
     Shape shape = Shape.valueOf(request.getParameter("shape"));
     Target target = Target.getTarget(color, shape);
     getGame().getBoardState().setChosenTarget(target);
-
+    setHasChanged();
     Gson gson = new Gson();
     out.println(gson.toJson(getTargetAndPosition(target))); 
   }
@@ -190,6 +202,7 @@ public class RicochetRobotsServlet extends HttpServlet {
     Direction direction = Direction.valueOf(request.getParameter("direction"));
     Position newPosition = MoveCalculator.calculateRobotPositionAfterMoving(getBoardState(), getGame().getBoard(), robot, direction);
     updateBoardState(robot, newPosition);
+ //   setHasChanged(true);
     Gson gson = new Gson();
     out.println(gson.toJson(newPosition));
   }

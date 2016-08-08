@@ -7,6 +7,7 @@ contextBoard = null;
 //currentTarget = null;
 //unusedTargets = document.getElementsByClassName("target");
 totalMoves = 0;
+currentVersion = 0;
 
 function init() {
   canvasBoard = document.getElementById("canvasBoard");
@@ -26,23 +27,24 @@ function init() {
   
   ajaxBuildWalls();
   ajaxBuildTargets();
-
+  
   canvasBoard.addEventListener("mousedown", ajaxMoveRobotTowardCanvasClick, false);
+  
+  ajaxGetLatestChangesFromServer();
 }
 
 function ajaxGetLatestChangesFromServer(){
   $.ajax({
-    url : "/ricochet/getlatestchanges",
+    url : "/ricochet/getlatestchanges?version=" + currentVersion,
     success : function(result) {
+      currentVersion = result;
       var date = new Date();
       var dateString = date.getHours() + ":" + date.getMinutes() + ":" + date.getSeconds();
-      appendMessage(dateString + "  " + result);     
+      appendMessage(dateString + "  " + result); 
+      setTimeout(ajaxGetLatestChangesFromServer, 10);
     }
   });
-  setTimeout(ajaxGetLatestChangesFromServer(), 10);
 }
-
- 
 
 function ajaxUpdateServerFromClient(){
   
@@ -366,7 +368,7 @@ function justClicked(robotColor) {
 }
 
 function writeMessage(message) {
-  document.getElementById("message").innerHTML = message;
+ // document.getElementById("message").innerHTML = message;
 }
 
 
