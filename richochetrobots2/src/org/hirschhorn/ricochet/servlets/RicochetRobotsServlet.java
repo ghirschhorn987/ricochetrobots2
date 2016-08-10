@@ -287,7 +287,8 @@ public class RicochetRobotsServlet extends HttpServlet {
     if (winningMoves.isEmpty()) {
       // Solver was cancelled or couldn't find a solution. Should send this info to client.
     }
-    else {MoveNode winningMove = winningMoves.get(0);      
+    else {
+      MoveNode winningMove = winningMoves.get(0);      
       for (MoveNode moveNode : winningMove.getAncestorsFromRootDownToSelf()) {
         Move move = moveNode.getMove();
         if (move != null) {
