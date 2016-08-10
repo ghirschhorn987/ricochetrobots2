@@ -112,7 +112,7 @@ public class RicochetRobotsServlet extends HttpServlet {
     if (oldVersion < currentVersion) {
       return new ArrayList<>(getUpdateEvents().subList(oldVersion, currentVersion));
     } else {
-      // Server was reset, return all events
+      // Old version is greater than current version.  Server must have been reset, return all events
       return new ArrayList<>(getUpdateEvents());
     }
   }

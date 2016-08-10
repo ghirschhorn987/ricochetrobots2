@@ -50,17 +50,26 @@ function ajaxGetLatestChangesFromServer(){
       
       var updateEventList = JSON.parse(result);
 
+      // Create a function that processes a single element in the list, and when done
+      // calls itself with the next element.  If there are no elements in list, then
+      // request more changes from server.  Need to do it this way because some events
+      // use setTimeout and therefore we can't just process all events in simple loop.
       var processUpdateEventList = function(updateEventList, index) {
         if (index < updateEventList.length) {
+          // We have an event to process. Process it and have that call back to us when
+          // done with the next index position.
           processUpdateEvent(
               updateEventList[index],
               function() {
                 processUpdateEventList(updateEventList, index + 1);
               });
         } else {
+          // No more events to process -- get more from server.
           setTimeout(ajaxGetLatestChangesFromServer, 10);          
         } 
       };
+      
+      // Start processing the list by calling function with index of 0.
       processUpdateEventList(updateEventList, 0);
     }
   });
