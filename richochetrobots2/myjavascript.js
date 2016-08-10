@@ -1,11 +1,17 @@
+// Constants
 CELL_WIDTH = 40;
 CELL_HEIGHT = 40;
 WALL_THICKNESS = 3;
+
+// Game State
 mostRecentlyClickedRobotColor = null;
 canvasBoard = null;
 contextBoard = null;
 totalMoves = 0;
 currentVersion = 0;
+playerId = "test";
+round = 0;
+phase = 0;
 
 function init() {
   canvasBoard = document.getElementById("canvasBoard");
@@ -29,23 +35,31 @@ function init() {
   canvasBoard.addEventListener("mousedown", ajaxMoveRobotTowardCanvasClick, false);
   
   ajaxGetLatestChangesFromServer();
+  //ajaxSetRobotStartingPositions();
 }
 
 function ajaxGetLatestChangesFromServer(){
   $.ajax({
     url : "/ricochet/getlatestchanges?version=" + currentVersion,
     success : function(result) {
-      var message;
-      if (result != currentVersion) {
-        currentVersion = result;
-        message = "New current version: " + currentVersion;
-      } else {
-        message = "No version change";
-      }
-       
+//      var message;
+//      if (result != currentVersion) {
+//        currentVersion = result;
+//        message = "New current version: " + currentVersion;
+//      } else {
+//        message = "No version change";
+//      }
       var date = new Date();
       var dateString = date.getHours() + ":" + date.getMinutes() + ":" + date.getSeconds();
-      appendMessage(dateString + "  " + message); 
+      appendMessage(dateString + "  " + result);
+      var updateEvent = JSON.parse(result);
+      currentVersion = updateEvent.eventData.currentVersion;
+
+     switch (updateEvent.eventType){
+     case "TARGET_SET":
+       var color = updateEvent.eventData.newTarget.color;
+       clearAllTargetsAndShowNewTarget(targetAndPosition);
+     }
       setTimeout(ajaxGetLatestChangesFromServer, 10);
     }
   });
@@ -60,6 +74,28 @@ function ajaxUpdateClientFromServer(){
     url : "/ricochet/boardstate/get",
     success : function(result) {
       writeMessage("updateClientFromServer is not yet implemented. server boardState=" + result);
+    }
+  });
+}
+
+function ajaxSubmitGuess(){
+  var guess = document.getElementById('guessBox').value;
+  $.ajax({
+    url : "/ricochet/submit/guess?playerId=" + playerId + "&guess=" + guess,
+    success : function(result) {
+      writeMessage("Guess has been submitted:" + guess);
+    }
+  });
+}
+
+function ajaxAddNewPlayer(){
+  playerId = document.getElementById('nameBox').value;
+  document.getElementById('nameBox').style.visibility = 'hidden';
+  document.getElementById('submitName').style.visibility = 'hidden';
+  $.ajax({
+    url : "/ricochet/submit/newplayer?playerId=" + playerId,
+    success : function(result) {
+      writeMessage("Player Has Been Added:" + guess);
     }
   });
 }
@@ -164,7 +200,6 @@ function ajaxCheckForWinner(robot) {
       var isWinner = JSON.parse(result);
       if (isWinner == true) {
         writeMessage("CONGRATULATIONS! YOU WON: " + result);
-        ajaxChooseNewTarget();
       }
     }
   });
@@ -183,6 +218,7 @@ function ajaxChooseNewTarget() {
       var targetAndPosition = JSON.parse(result);
       clearAllTargetsAndShowNewTarget(targetAndPosition);
       ajaxGetBoardState();
+      currentVersion++;
     }
   });
 }

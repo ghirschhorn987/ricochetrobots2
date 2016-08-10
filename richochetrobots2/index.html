@@ -8,6 +8,7 @@
 </head>
 
 <body onload="init()">
+
   <div id="board">
     <canvas id="canvasBoard" width="640" height="640"></canvas>
     <svg id="boardSvg" width="640" height="640">
@@ -28,6 +29,22 @@
 
   <br/><br/>
   
+  
+  <div id = "guesses">
+    Guess: <input id="guessBox" type="text"><br>
+    <button id="submitGuess" onclick="ajaxSubmitGuess()">
+    Submit
+    </button>
+    <div>
+    Name: <input id="nameBox" type="text"><br>
+    <button id="submitName" onclick="ajaxAddNewPlayer()">
+    Submit
+    </button>
+    </div>
+  </div>
+  
+  
+  
   <div id="buttons">
     Target: <select id="targetListBox" onchange="targetSelectedFromListBox()"></select>
     <button id="solveGameButton" onclick="ajaxSolveGame()" style="visibility:hidden">Solve game</button>
@@ -42,5 +59,9 @@
     <br /> <a href="/ricochet/board/walls/get">Walls</a>
     <br /> <a href="/ricochet/board/targets/get">Targets</a>
     <br /> <a href="/ricochet/boardstate/get">BoardState</a>
+    </div>
+  
 </body>
+
+
 </html>

@@ -29,10 +29,14 @@ import org.hirschhorn.ricochet.game.GameFactory;
 import org.hirschhorn.ricochet.game.Move;
 import org.hirschhorn.ricochet.game.MoveCalculator;
 import org.hirschhorn.ricochet.game.RobotPositions;
+import org.hirschhorn.ricochet.game.UpdateEvent;
+import org.hirschhorn.ricochet.game.UpdateEventData;
+import org.hirschhorn.ricochet.game.UpdateEventType;
 import org.hirschhorn.ricochet.solver.MoveNode;
 import org.hirschhorn.ricochet.solver.Solver;
 import org.hirschhorn.ricochet.solver.SolverFactory;
 import org.hirschhorn.ricochet.solver.UnprocessedMovesType;
+import org.hirschhorn.ricochet.updateevent.TargetSetEventData;
 
 import com.google.gson.Gson;
 
@@ -40,6 +44,7 @@ import com.google.gson.Gson;
 public class RicochetRobotsServlet extends HttpServlet {
  
   private static final long serialVersionUID = 153254652788906133L;
+  private static final long LATEST_CHANGES_TIMEOUT_MILLIS = 10000;
   
   public void init() throws ServletException {
     initializeGame(0);
@@ -48,25 +53,36 @@ public class RicochetRobotsServlet extends HttpServlet {
   private void initializeGame(int targetIndex) {
     Game game = (new GameFactory()).createGame(targetIndex);
     getServletContext().setAttribute("GAME", game);
-    getServletContext().setAttribute("CURRENT_VERSION", 0);
+    getServletContext().setAttribute("UPDATE_EVENTS", new ArrayList<UpdateEvent>());
   }
   
   private Game getGame() {
     return (Game) getServletContext().getAttribute("GAME");
   }
   
-  private int getCurrentVersion() {
-    return (int) getServletContext().getAttribute("CURRENT_VERSION");    
+  @SuppressWarnings("unchecked")
+  private List<UpdateEvent> getUpdateEvents() {
+    return (List<UpdateEvent>) getServletContext().getAttribute("UPDATE_EVENTS");    
   }
   
-  private boolean getHasChangedSince(int version) {
-    return getCurrentVersion() > version;
+  @SuppressWarnings("unchecked")
+  private void addUpdateEvent(UpdateEvent updateEvent) {
+    ((List<UpdateEvent>) getServletContext().getAttribute("UPDATE_EVENTS")).add(updateEvent);    
   }
   
-  private void setHasChanged() {
-    getServletContext().setAttribute("CURRENT_VERSION", getCurrentVersion() + 1);
+  private int getUpdateVersion() {
+    return getUpdateEvents().size();  
   }
   
+  private boolean hasChangedSince(int updateVersion) {
+    return getUpdateVersion() > updateVersion;
+  }
+    
+  private List<UpdateEvent> getUpdateEventsSince(int updateVersion) {
+    List<UpdateEvent> allUpdateEvents = getUpdateEvents();
+    return allUpdateEvents.subList(updateVersion, allUpdateEvents.size());
+  }
+
   private BoardState getBoardState() {
     return getGame().getBoardState();
   }
@@ -106,6 +122,9 @@ public class RicochetRobotsServlet extends HttpServlet {
       case "/robot/iswinner":
         doIsWinner(request, response);
         break;
+      case "/submit/guess":
+        doSubmitGuess(request, response);
+        break;
       default:
         response.setContentType("text/html");
         response.setStatus(HttpServletResponse.SC_NOT_FOUND);
@@ -113,10 +132,14 @@ public class RicochetRobotsServlet extends HttpServlet {
     }
   }
   
+  private void doSubmitGuess(HttpServletRequest request, HttpServletResponse response) {
+    getGame().addGuessToMap(request.getParameter("playerId"), Integer.getInteger(request.getParameter("guess")));
+  }
+
   private void doGetLatestChanges(HttpServletRequest request, HttpServletResponse response) throws IOException {
-    int version = Integer.valueOf(request.getParameter("version"));
+    int updateVersion = Integer.valueOf(request.getParameter("version"));
     long startTime = System.currentTimeMillis();
-    while (!getHasChangedSince(version) && (System.currentTimeMillis() - startTime) < 10000) {
+    while (!hasChangedSince(updateVersion) && (System.currentTimeMillis() - startTime) < LATEST_CHANGES_TIMEOUT_MILLIS) {
       try {
         Thread.sleep(250);
       } catch (InterruptedException e) {
@@ -124,54 +147,50 @@ public class RicochetRobotsServlet extends HttpServlet {
       }
     }
     PrintWriter out = response.getWriter();
-    out.println(getCurrentVersion());
+    Gson gson = new Gson();
+    out.println(gson.toJson(getUpdateEventsSince(updateVersion)));
   }
 
+  /**
+   * This does NOT remove target from unused targets
+   */
   private void doGetSetTarget(HttpServletRequest request, HttpServletResponse response) throws IOException {
-    PrintWriter out = response.getWriter();
+    Target oldTarget = getBoardState().getChosenTarget();
+
     Color color = Color.valueOf(request.getParameter("color"));
     Shape shape = Shape.valueOf(request.getParameter("shape"));
-    Target target = Target.getTarget(color, shape);
-    getGame().getBoardState().setChosenTarget(target);
-    setHasChanged();
-    Gson gson = new Gson();
-    out.println(gson.toJson(getTargetAndPosition(target))); 
+    Target newTarget = Target.getTarget(color, shape);
+
+    getBoardState().setChosenTarget(newTarget);
+    
+    UpdateEvent updateEvent = new UpdateEvent(
+            UpdateEventType.TARGET_SET,
+            new TargetSetEventData(oldTarget, newTarget, getPosition(newTarget)),
+            getUpdateVersion()+1);
+    addUpdateEvent(updateEvent);
   }
 
   private void doGetChooseNewTarget(HttpServletRequest request, HttpServletResponse response) throws IOException {
-    
-    //var unusedTargets1 = unusedTargets;
-    //for(var i=0; i < unusedTargets.length - 1; i++) {
-    //  console.log("" + i + " " + unusedTargets[i] + " " + currentTarget)
-    //  if(unusedTargets[i] == targetIndexToTarget(currentTarget)) {
-    //     unusedTargets1.splice(i, 1);
-    //  }
-    //}
-    //unusedTargets = unusedTargets1;
-    //var n = Math.floor((Math.random() * unusedTargets.length) + 1);
-    //currentTarget = targetToTargetIndex(unusedTargets[n]);
-    //ajaxSetTarget(targetToTargetIndex(unusedTargets[n]));
-    getGame().removeTarget(getGame().getBoardState().getChosenTarget());
+    Target oldTarget = getBoardState().getChosenTarget();
+    if (oldTarget != null) {
+      getGame().removeTarget(getGame().getBoardState().getChosenTarget());
+    }
+  
+    // Choose random target to return
     List<Target> unusedTargets = getGame().getUnusedTargets();
-    
     int n = (int) Math.floor((Math.random() * unusedTargets.size()) + 1);
-    Target target = unusedTargets.get(n);
-    getGame().getBoardState().setChosenTarget(target);
-    PrintWriter out = response.getWriter();
-    Gson gson = new Gson();
-    out.println(gson.toJson(getTargetAndPosition(target)));    
+    Target newTarget = unusedTargets.get(n);
+    
+    getBoardState().setChosenTarget(newTarget);
+    UpdateEvent updateEvent = new UpdateEvent(
+            UpdateEventType.TARGET_SET,
+            new TargetSetEventData(oldTarget, newTarget, getPosition(newTarget)),
+            getUpdateVersion()+1);
+    addUpdateEvent(updateEvent);
   }
   
-  private static class TargetAndPosition{
-    private Target target;
-    private Position position;
-  }
-  
-  private TargetAndPosition getTargetAndPosition(Target target) {
-    TargetAndPosition targetAndPosition = new TargetAndPosition();
-    targetAndPosition.position = getGame().getBoard().getTargetPosition(target);
-    targetAndPosition.target = target;
-    return targetAndPosition;
+  private Position getPosition(Target target) {
+    return getGame().getBoard().getTargetPosition(target);
   }
   
   private void updateBoardState(Color robot, Position newPosition) {
