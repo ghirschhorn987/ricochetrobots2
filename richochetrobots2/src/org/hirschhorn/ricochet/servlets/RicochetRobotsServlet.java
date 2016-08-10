@@ -217,7 +217,7 @@ public class RicochetRobotsServlet extends HttpServlet {
 
     // Choose random target to return
     List<Target> unusedTargets = getGame().getUnusedTargets();
-    int n = (int) Math.floor((Math.random() * unusedTargets.size()) + 1);
+    int n = (int) Math.floor((Math.random() * unusedTargets.size()));
     Target newTarget = unusedTargets.get(n);
 
     changeTarget(oldTarget, newTarget);
