@@ -53,8 +53,8 @@ public class RicochetRobotsServlet extends HttpServlet {
 
   private void initializeGame(int targetIndex) {
     Game game = (new GameFactory()).createGame(targetIndex);
-    getServletContext().setAttribute("GAME", game);
-    getServletContext().setAttribute("UPDATE_EVENTS", new ArrayList<UpdateEvent>());
+    getServletContext().setAttribute("GAME", game);    
+    intializeUpdateEvents();
         
     for (Color robot : Color.values()) {
       Position newPosition = getBoardState().getRobotPosition(robot);
@@ -71,33 +71,49 @@ public class RicochetRobotsServlet extends HttpServlet {
   private Game getGame() {
     return (Game) getServletContext().getAttribute("GAME");
   }
+  
+  private Solver getSolver() {
+    return (Solver) getServletContext().getAttribute("SOLVER");
+  }
 
+  private void setSolver(Solver solver) {
+    getServletContext().setAttribute("SOLVER", solver);
+  }
+
+  private synchronized void intializeUpdateEvents() {
+    getServletContext().setAttribute("UPDATE_EVENTS", new ArrayList<UpdateEvent>());    
+  }
+  
   @SuppressWarnings("unchecked")
-  private List<UpdateEvent> getUpdateEvents() {
+  private synchronized void addUpdateEvent(UpdateEvent updateEvent) {
+    ((List<UpdateEvent>) getServletContext().getAttribute("UPDATE_EVENTS")).add(updateEvent);
+  }
+  
+  @SuppressWarnings("unchecked")
+  private synchronized List<UpdateEvent> getUpdateEvents() {
     return (List<UpdateEvent>) getServletContext().getAttribute("UPDATE_EVENTS");
   }
 
   @SuppressWarnings("unchecked")
-  private void addUpdateEvent(UpdateEvent updateEvent) {
-    ((List<UpdateEvent>) getServletContext().getAttribute("UPDATE_EVENTS")).add(updateEvent);
-  }
-
-  private int getUpdateVersion() {
-    return getUpdateEvents().size();
+  private synchronized int getUpdateVersion() {
+    return ((List<UpdateEvent>)getServletContext().getAttribute("UPDATE_EVENTS")).size();
   }
 
   private boolean hasChangedSince(int updateVersion) {
     return getUpdateVersion() != updateVersion;
   }
 
-  private List<UpdateEvent> getUpdateEventsSince(int updateVersion) {
-    List<UpdateEvent> allUpdateEvents = getUpdateEvents();
+  private synchronized List<UpdateEvent> getUpdateEventsSince(int oldVersion) {
+    int currentVersion = getUpdateVersion();
+    if (oldVersion == currentVersion) {
+      return new ArrayList<UpdateEvent>();
+    }
     
-    if (updateVersion <= allUpdateEvents.size()) {
-      return allUpdateEvents.subList(updateVersion, allUpdateEvents.size());
+    if (oldVersion < currentVersion) {
+      return new ArrayList<>(getUpdateEvents().subList(oldVersion, currentVersion));
     } else {
       // Server was reset, return all events
-      return allUpdateEvents;
+      return new ArrayList<>(getUpdateEvents());
     }
   }
 
@@ -248,6 +264,7 @@ public class RicochetRobotsServlet extends HttpServlet {
   }
   
   private void doResetGame(HttpServletRequest request, HttpServletResponse response) throws IOException {
+    getSolver().tryToCancel();
     initializeGame(0);
   }  
 
@@ -261,29 +278,36 @@ public class RicochetRobotsServlet extends HttpServlet {
     }
 
     Game game = getGame();
-    Solver solver = (new SolverFactory()).createSolver(game, movesType);
-    MoveNode winningMove = solver.solve().get(0);
-
-    for (MoveNode moveNode : winningMove.getAncestorsFromRootDownToSelf()) {
-      Move move = moveNode.getMove();
-      if (move != null) {
-        Color robot = move.getRobot();
-        Direction direction = move.getDirection();
-        Position oldPosition = getBoardState().getRobotPosition(robot);
-        Position newPosition = MoveCalculator.calculateRobotPositionAfterMoving(getBoardState(), getGame().getBoard(),
-              robot, direction);
-      
-        updateBoardState(robot, newPosition);
-          
-        UpdateEvent updateEvent = new UpdateEvent(
-                UpdateEventType.ROBOT_GLIDED,
-                new RobotGlidedEventData(robot, oldPosition, newPosition, direction),
-                getUpdateVersion() + 1);
-        addUpdateEvent(updateEvent);      
-      }
+    if (getSolver() != null) {
+      getSolver().tryToCancel();
     }
-    
-    doGetChooseNewTarget(request, response);
+    Solver newSolver = (new SolverFactory()).createSolver(game, movesType);
+    setSolver(newSolver);
+    List<MoveNode> winningMoves = newSolver.solve();
+    if (winningMoves.isEmpty()) {
+      // Solver was cancelled or couldn't find a solution. Should send this info to client.
+    }
+    else {MoveNode winningMove = winningMoves.get(0);      
+      for (MoveNode moveNode : winningMove.getAncestorsFromRootDownToSelf()) {
+        Move move = moveNode.getMove();
+        if (move != null) {
+          Color robot = move.getRobot();
+          Direction direction = move.getDirection();
+          Position oldPosition = getBoardState().getRobotPosition(robot);
+          Position newPosition = MoveCalculator.calculateRobotPositionAfterMoving(getBoardState(), getGame().getBoard(),
+                robot, direction);
+        
+          updateBoardState(robot, newPosition);
+            
+          UpdateEvent updateEvent = new UpdateEvent(
+                  UpdateEventType.ROBOT_GLIDED,
+                  new RobotGlidedEventData(robot, oldPosition, newPosition, direction),
+                  getUpdateVersion() + 1);
+          addUpdateEvent(updateEvent);      
+        }
+      }
+      doGetChooseNewTarget(request, response);
+    }
   }
 
   public int getTargetIndexParam(HttpServletRequest request) {

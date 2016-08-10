@@ -296,7 +296,23 @@ function buildTarget(target, position) {
   var svg   = document.getElementById("boardSvg");
   var svgNS = svg.namespaceURI;
   
-  var rect = document.createElementNS(svgNS,'rect');
+  var svgShape = 'rect';
+  switch (target.shape) {
+    case 'Star':
+      svgShape = 'rect';
+      break;
+    case 'Planet':
+      svgShape = 'rect';
+      break;
+    case 'Moon':
+      svgShape = 'rect';
+      break;
+    case 'Sawblade':
+      svgShape = 'rect';
+      break;
+  }
+  
+  var rect = document.createElementNS(svgNS,svgShape);
   rect.setAttribute('id', target.color.charAt(0) + "_" + target.shape.substring(0,2));
   rect.setAttribute('class', "target");
   rect.setAttribute('x',cellXToX(position.x) + GAP);

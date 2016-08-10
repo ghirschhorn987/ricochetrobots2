@@ -35,6 +35,8 @@ public class Solver {
   private MoveStats moveStats;
   private Set<Integer> boardStateCache;
   private UnprocessedMovesType unprocessedMovesType;
+  
+  private boolean shouldCancel;
 
   public static void main(String[] args) throws IOException {
 
@@ -89,12 +91,17 @@ public class Solver {
     return board;
   }
 
+  public void tryToCancel() {
+    shouldCancel = true;
+  }
+  
   public List<MoveNode> solve() throws IOException {
+    shouldCancel = false;
     moveStats.playStarted();
     UnprocessedMoves unprocessedMoves = UnprocessedMovesFactory.newUnprocessedMoves(unprocessedMovesType);
     unprocessedMoves.add(rootMove);
 
-    while (!(unprocessedMoves.isEmpty())) {
+    while (!(unprocessedMoves.isEmpty()) && !shouldCancel) {
       MoveNode moveNode = unprocessedMoves.removeFirst();
       List<MoveNode> nextMoves = createNextMoveNodes(moveNode);
       
@@ -122,6 +129,12 @@ public class Solver {
       }
 
     }
+    
+    if (shouldCancel) {
+      logger.severe("Solving canceled.");
+      return new ArrayList<>(); 
+    }
+    
     moveStats.printWinners();
     return moveStats.getWinners();
   }
