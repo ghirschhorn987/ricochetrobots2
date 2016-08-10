@@ -35,34 +35,67 @@ function init() {
   canvasBoard.addEventListener("mousedown", ajaxMoveRobotTowardCanvasClick, false);
   
   ajaxGetLatestChangesFromServer();
-  //ajaxSetRobotStartingPositions();
+  
+  getRobotFromColor("Red").style.visibility = "visible";
+  getRobotFromColor("Yellow").style.visibility = "visible";
+  getRobotFromColor("Green").style.visibility = "visible";
+  getRobotFromColor("Blue").style.visibility = "visible";
 }
 
 function ajaxGetLatestChangesFromServer(){
   $.ajax({
     url : "/ricochet/getlatestchanges?version=" + currentVersion,
     success : function(result) {
-//      var message;
-//      if (result != currentVersion) {
-//        currentVersion = result;
-//        message = "New current version: " + currentVersion;
-//      } else {
-//        message = "No version change";
-//      }
-      var date = new Date();
-      var dateString = date.getHours() + ":" + date.getMinutes() + ":" + date.getSeconds();
-      appendMessage(dateString + "  " + result);
-      var updateEvent = JSON.parse(result);
-      currentVersion = updateEvent.eventData.currentVersion;
+      appendMessageWithDate(result);
+      
+      var updateEventList = JSON.parse(result);
 
-     switch (updateEvent.eventType){
-     case "TARGET_SET":
-       var color = updateEvent.eventData.newTarget.color;
-       clearAllTargetsAndShowNewTarget(targetAndPosition);
-     }
-      setTimeout(ajaxGetLatestChangesFromServer, 10);
+      var processUpdateEventList = function(updateEventList, index) {
+        if (index < updateEventList.length) {
+          processUpdateEvent(
+              updateEventList[index],
+              function() {
+                processUpdateEventList(updateEventList, index + 1);
+              });
+        } else {
+          setTimeout(ajaxGetLatestChangesFromServer, 10);          
+        } 
+      };
+      processUpdateEventList(updateEventList, 0);
     }
   });
+}
+
+function processUpdateEvent(updateEvent, actionWhenDone) {
+  currentVersion = updateEvent.currentVersion;
+  
+  var shouldExecuteActionWhenDone = true;
+  switch (updateEvent.eventType){
+    case "ROBOT_GLIDED":
+      var robot = getRobotFromColor(updateEvent.eventData.robot);
+      var oldPositon = updateEvent.eventData.oldPosition;
+      var newPosition = updateEvent.eventData.newPosition;
+      var direction = updateEvent.eventData.direction;
+      moveRobotGlideToPosition(robot, direction, newPosition, actionWhenDone);
+      shouldExecuteActionWhenDone = false;
+      break;
+    case "ROBOT_JUMPED":
+      var robot = getRobotFromColor(updateEvent.eventData.robot);
+      var oldPositon = updateEvent.eventData.oldPosition;
+      var newPosition = updateEvent.eventData.newPosition;
+      moveRobotJumpToPosition(robot, newPosition, actionWhenDone);
+      break;
+    case "TARGET_SET":
+      var oldTarget = updateEvent.eventData.oldTarget;
+      var newTarget = updateEvent.eventData.newTarget;
+      var position = updateEvent.eventData.position;
+      clearAllTargetsAndShowNewTarget(newTarget, position);
+      break;
+  }
+  
+  if (shouldExecuteActionWhenDone) {
+    actionWhenDone();
+  }
 }
 
 function ajaxUpdateServerFromClient(){
@@ -143,8 +176,6 @@ function ajaxSetTarget(targetColorAndShapeString) {
   $.ajax({
     url : "/ricochet/game/target/set?color=" + array[0] + "&shape=" + array[1],
     success : function(result) {
-      var targetAndPosition = JSON.parse(result);
-      clearAllTargetsAndShowNewTarget(targetAndPosition);
     }
   });
 }
@@ -154,19 +185,6 @@ function ajaxSolveGame() {
   $.ajax({
     url : "/ricochet/game/solve",
     success : function(result) {
-      writeMessage("Game solved!");
-      var moves = JSON.parse(result);
-      var actionWhenDone = function(currentAction) {
-        if (currentAction < moves.length) {
-          var move = moves[currentAction];
-          ajaxMoveRobotTowardDirection(move.robot, move.direction, function() {
-            actionWhenDone(currentAction + 1)
-          });
-        }
-      };
-      ajaxMoveRobotTowardDirection(moves[1].robot, moves[1].direction, function() {
-        actionWhenDone(2)
-      });
     }
   });
 }
@@ -186,9 +204,6 @@ function ajaxMoveRobotTowardDirection(robotColor, direction, actionWhenDone) {
     url : "/ricochet/robot/move?robot=" + robotColor + "&direction="
         + direction,
     success : function(result) {
-      var position = JSON.parse(result);
-      var robot = getRobotFromColor(robotColor);
-      moveRobotToPosition(robot, direction, position, actionWhenDone);
     }
   });
 }
@@ -215,10 +230,6 @@ function ajaxChooseNewTarget() {
   $.ajax({
     url : "/ricochet/game/target/chooseNew",
     success : function(result) {
-      var targetAndPosition = JSON.parse(result);
-      clearAllTargetsAndShowNewTarget(targetAndPosition);
-      ajaxGetBoardState();
-      currentVersion++;
     }
   });
 }
@@ -273,9 +284,9 @@ function buildTargetsListBox(targets, positions){
   }
 }
 
-function clearAllTargetsAndShowNewTarget(targetAndPosition) {
+function clearAllTargetsAndShowNewTarget(target, position) {
   clearAllTargets();
-  buildTarget(targetAndPosition.target, targetAndPosition.position);
+  buildTarget(target, position);
   document.getElementById("solveGameButton").style.visibility = "visible";
 }
 
@@ -307,22 +318,28 @@ function clearAllTargets(){
   }
 }
 
-function moveRobotToPosition(robot, direction, position, actionWhenDone) {
+
+function moveRobotJumpToPosition(robot, cellPosition) {
+  robot.style.left = cellXToX(cellPosition.x);
+  robot.style.top = cellYToY(cellPosition.y);
+}
+
+function moveRobotGlideToPosition(robot, direction, cellPosition, actionWhenDone) {
   switch (direction) {
   case 'North':
   case 'South':
-    moveVertical(robot, cellYToY(position.y), actionWhenDone);
+    moveVerticalGlide(robot, cellYToY(cellPosition.y), actionWhenDone);
     break;
   case 'East':
   case 'West':
-    moveHorizontal(robot, cellXToX(position.x), actionWhenDone);
+    moveHorizontalGlide(robot, cellXToX(cellPosition.x), actionWhenDone);
     break;
   }
   totalMoves++;
   writeMessage(totalMoves);
 }
 
-function moveVertical(robot, newY, actionWhenDone) {
+function moveVerticalGlide(robot, newY, actionWhenDone) {
   y = robot.offsetTop;
   if (newY > y) {
     robot.style.top = y + 2;
@@ -332,7 +349,7 @@ function moveVertical(robot, newY, actionWhenDone) {
   }
   if (newY != y) {
     setTimeout(function() {
-      moveVertical(robot, newY, actionWhenDone)
+      moveVerticalGlide(robot, newY, actionWhenDone)
     }, 5);
   } else {
     ajaxCheckForWinner(robot);
@@ -342,7 +359,7 @@ function moveVertical(robot, newY, actionWhenDone) {
   }
 }
 
-function moveHorizontal(robot, newX, actionWhenDone) {
+function moveHorizontalGlide(robot, newX, actionWhenDone) {
   x = robot.offsetLeft;
   if (newX > x) {
     robot.style.left = x + 2;
@@ -352,7 +369,7 @@ function moveHorizontal(robot, newX, actionWhenDone) {
   }
   if (newX != x) {
     setTimeout(function() {
-      moveHorizontal(robot, newX, actionWhenDone)
+      moveHorizontalGlide(robot, newX, actionWhenDone)
     }, 5);
   } else {
     ajaxCheckForWinner(robot);
@@ -370,9 +387,12 @@ function writeMessage(message) {
   document.getElementById("message").innerHTML = message;
 }
 
-function appendMessage(message) {
+function appendMessageWithDate(message) {
+  var date = new Date();
+  var dateString = date.getHours() + ":" + date.getMinutes() + ":" + date.getSeconds();
+
   var currentMessage = document.getElementById("updates").innerHTML;
-  document.getElementById("updates").innerHTML = currentMessage + "<br>" + message;
+  document.getElementById("updates").innerHTML = currentMessage + "<br>" + dateString + "  " + message;
 }
 
 function getPositionOnCanvas(canvas, domEvent) {

@@ -25,6 +25,7 @@
 }
 
 .robot {
+ visibility: hidden;
  position: absolute;
  z-index: 99;
 }

@@ -36,16 +36,17 @@ import org.hirschhorn.ricochet.solver.MoveNode;
 import org.hirschhorn.ricochet.solver.Solver;
 import org.hirschhorn.ricochet.solver.SolverFactory;
 import org.hirschhorn.ricochet.solver.UnprocessedMovesType;
+import org.hirschhorn.ricochet.updateevent.RobotGlidedEventData;
+import org.hirschhorn.ricochet.updateevent.RobotJumpedEventData;
 import org.hirschhorn.ricochet.updateevent.TargetSetEventData;
 
 import com.google.gson.Gson;
 
-
 public class RicochetRobotsServlet extends HttpServlet {
- 
+
   private static final long serialVersionUID = 153254652788906133L;
   private static final long LATEST_CHANGES_TIMEOUT_MILLIS = 10000;
-  
+
   public void init() throws ServletException {
     initializeGame(0);
   }
@@ -54,30 +55,38 @@ public class RicochetRobotsServlet extends HttpServlet {
     Game game = (new GameFactory()).createGame(targetIndex);
     getServletContext().setAttribute("GAME", game);
     getServletContext().setAttribute("UPDATE_EVENTS", new ArrayList<UpdateEvent>());
+    
+    for (Color robot : Color.values()) {
+      Position newPosition = getBoardState().getRobotPosition(robot);
+      UpdateEventData eventData = new RobotJumpedEventData(robot, null, newPosition);
+      addUpdateEvent(new UpdateEvent(
+              UpdateEventType.ROBOT_JUMPED, eventData, getUpdateVersion() + 1));
+    }
+    
   }
-  
+
   private Game getGame() {
     return (Game) getServletContext().getAttribute("GAME");
   }
-  
+
   @SuppressWarnings("unchecked")
   private List<UpdateEvent> getUpdateEvents() {
-    return (List<UpdateEvent>) getServletContext().getAttribute("UPDATE_EVENTS");    
+    return (List<UpdateEvent>) getServletContext().getAttribute("UPDATE_EVENTS");
   }
-  
+
   @SuppressWarnings("unchecked")
   private void addUpdateEvent(UpdateEvent updateEvent) {
-    ((List<UpdateEvent>) getServletContext().getAttribute("UPDATE_EVENTS")).add(updateEvent);    
+    ((List<UpdateEvent>) getServletContext().getAttribute("UPDATE_EVENTS")).add(updateEvent);
   }
-  
+
   private int getUpdateVersion() {
-    return getUpdateEvents().size();  
+    return getUpdateEvents().size();
   }
-  
+
   private boolean hasChangedSince(int updateVersion) {
     return getUpdateVersion() > updateVersion;
   }
-    
+
   private List<UpdateEvent> getUpdateEventsSince(int updateVersion) {
     List<UpdateEvent> allUpdateEvents = getUpdateEvents();
     return allUpdateEvents.subList(updateVersion, allUpdateEvents.size());
@@ -86,10 +95,10 @@ public class RicochetRobotsServlet extends HttpServlet {
   private BoardState getBoardState() {
     return getGame().getBoardState();
   }
-  
+
   @Override
   public void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-//    See http://codebox.org.uk/pages/java-servlet-url-parts   
+    // See http://codebox.org.uk/pages/java-servlet-url-parts
     String pathInfo = request.getPathInfo();
     switch (pathInfo) {
       case "/getlatestchanges":
@@ -128,10 +137,10 @@ public class RicochetRobotsServlet extends HttpServlet {
       default:
         response.setContentType("text/html");
         response.setStatus(HttpServletResponse.SC_NOT_FOUND);
-        response.getWriter().print("Unrecognized request: " + request.getRequestURI());        
+        response.getWriter().print("Unrecognized request: " + request.getRequestURI());
     }
   }
-  
+
   private void doSubmitGuess(HttpServletRequest request, HttpServletResponse response) {
     getGame().addGuessToMap(request.getParameter("playerId"), Integer.getInteger(request.getParameter("guess")));
   }
@@ -139,7 +148,8 @@ public class RicochetRobotsServlet extends HttpServlet {
   private void doGetLatestChanges(HttpServletRequest request, HttpServletResponse response) throws IOException {
     int updateVersion = Integer.valueOf(request.getParameter("version"));
     long startTime = System.currentTimeMillis();
-    while (!hasChangedSince(updateVersion) && (System.currentTimeMillis() - startTime) < LATEST_CHANGES_TIMEOUT_MILLIS) {
+    while (!hasChangedSince(updateVersion)
+            && (System.currentTimeMillis() - startTime) < LATEST_CHANGES_TIMEOUT_MILLIS) {
       try {
         Thread.sleep(250);
       } catch (InterruptedException e) {
@@ -162,11 +172,9 @@ public class RicochetRobotsServlet extends HttpServlet {
     Target newTarget = Target.getTarget(color, shape);
 
     getBoardState().setChosenTarget(newTarget);
-    
-    UpdateEvent updateEvent = new UpdateEvent(
-            UpdateEventType.TARGET_SET,
-            new TargetSetEventData(oldTarget, newTarget, getPosition(newTarget)),
-            getUpdateVersion()+1);
+
+    UpdateEvent updateEvent = new UpdateEvent(UpdateEventType.TARGET_SET,
+            new TargetSetEventData(oldTarget, newTarget, getPosition(newTarget)), getUpdateVersion() + 1);
     addUpdateEvent(updateEvent);
   }
 
@@ -175,31 +183,29 @@ public class RicochetRobotsServlet extends HttpServlet {
     if (oldTarget != null) {
       getGame().removeTarget(getGame().getBoardState().getChosenTarget());
     }
-  
+
     // Choose random target to return
     List<Target> unusedTargets = getGame().getUnusedTargets();
     int n = (int) Math.floor((Math.random() * unusedTargets.size()) + 1);
     Target newTarget = unusedTargets.get(n);
-    
+
     getBoardState().setChosenTarget(newTarget);
-    UpdateEvent updateEvent = new UpdateEvent(
-            UpdateEventType.TARGET_SET,
-            new TargetSetEventData(oldTarget, newTarget, getPosition(newTarget)),
-            getUpdateVersion()+1);
+    UpdateEvent updateEvent = new UpdateEvent(UpdateEventType.TARGET_SET,
+            new TargetSetEventData(oldTarget, newTarget, getPosition(newTarget)), getUpdateVersion() + 1);
     addUpdateEvent(updateEvent);
   }
-  
+
   private Position getPosition(Target target) {
     return getGame().getBoard().getTargetPosition(target);
   }
-  
+
   private void updateBoardState(Color robot, Position newPosition) {
     RobotPositions.Builder robotPositionsBuilder = new RobotPositions.Builder(getBoardState().getRobotPositions());
     robotPositionsBuilder.setRobotPosition(robot, newPosition);
     BoardState newBoardState = new BoardState(getBoardState().getChosenTarget(), robotPositionsBuilder.build());
     getGame().updateBoardState(newBoardState);
   }
-  
+
   private void doIsWinner(HttpServletRequest request, HttpServletResponse response) throws IOException {
     PrintWriter out = response.getWriter();
     Color robot = Color.valueOf(request.getParameter("robot"));
@@ -209,18 +215,21 @@ public class RicochetRobotsServlet extends HttpServlet {
   }
 
   private void doMoveRobot(HttpServletRequest request, HttpServletResponse response) throws IOException {
-    PrintWriter out = response.getWriter();
     Color robot = Color.valueOf(request.getParameter("robot"));
     Direction direction = Direction.valueOf(request.getParameter("direction"));
-    Position newPosition = MoveCalculator.calculateRobotPositionAfterMoving(getBoardState(), getGame().getBoard(), robot, direction);
+    Position oldPosition = getBoardState().getRobotPosition(robot);
+    Position newPosition = MoveCalculator.calculateRobotPositionAfterMoving(getBoardState(), getGame().getBoard(),
+            robot, direction);
     updateBoardState(robot, newPosition);
- //   setHasChanged(true);
-    Gson gson = new Gson();
-    out.println(gson.toJson(newPosition));
+        
+    UpdateEvent updateEvent = new UpdateEvent(
+            UpdateEventType.ROBOT_GLIDED,
+            new RobotGlidedEventData(robot, oldPosition, newPosition, direction),
+            getUpdateVersion() + 1);
+    addUpdateEvent(updateEvent);
   }
 
-
-  private boolean isWinner(Color robot,Board board, BoardState boardState) {
+  private boolean isWinner(Color robot, Board board, BoardState boardState) {
     Target chosenTarget = boardState.getChosenTarget();
     Color targetColor = chosenTarget.getColor();
     return boardState.getRobotPosition(targetColor).equals(board.getTargetPosition(chosenTarget));
@@ -228,19 +237,37 @@ public class RicochetRobotsServlet extends HttpServlet {
 
   private void doGetSolveGame(HttpServletRequest request, HttpServletResponse response) throws IOException {
     PrintWriter out = response.getWriter();
-    response.setContentType("text/html");    
+    response.setContentType("text/html");
     UnprocessedMovesType movesType = UnprocessedMovesType.BREADTH_FIRST_SEARCH;
     String movesTypeParam = request.getParameter("unprocessedMovesType");
     if (movesTypeParam != null) {
       movesType = UnprocessedMovesType.valueOf(movesTypeParam);
     }
-    
+
     Game game = getGame();
     Solver solver = (new SolverFactory()).createSolver(game, movesType);
-    List<MoveNode> winningMoves = solver.solve();
-    response.setStatus(HttpServletResponse.SC_OK);
-    String winningMovesJsonString = getMovesAsJsonString(winningMoves.get(0));
-    out.println(winningMovesJsonString);
+    MoveNode winningMove = solver.solve().get(0);
+
+    for (MoveNode moveNode : winningMove.getAncestorsFromRootDownToSelf()) {
+      Move move = moveNode.getMove();
+      if (move != null) {
+        Color robot = move.getRobot();
+        Direction direction = move.getDirection();
+        Position oldPosition = getBoardState().getRobotPosition(robot);
+        Position newPosition = MoveCalculator.calculateRobotPositionAfterMoving(getBoardState(), getGame().getBoard(),
+              robot, direction);
+      
+        updateBoardState(robot, newPosition);
+          
+        UpdateEvent updateEvent = new UpdateEvent(
+                UpdateEventType.ROBOT_GLIDED,
+                new RobotGlidedEventData(robot, oldPosition, newPosition, direction),
+                getUpdateVersion() + 1);
+        addUpdateEvent(updateEvent);      
+      }
+    }
+    
+    doGetChooseNewTarget(request, response);
   }
 
   public int getTargetIndexParam(HttpServletRequest request) {
@@ -253,21 +280,21 @@ public class RicochetRobotsServlet extends HttpServlet {
   }
 
   private void doGetWalls(HttpServletRequest request, HttpServletResponse response) throws IOException {
-    PrintWriter out = response.getWriter();    
+    PrintWriter out = response.getWriter();
     response.setContentType("text/plain");
     response.setStatus(HttpServletResponse.SC_OK);
     Gson gson = new Gson();
     out.println(gson.toJson(getGame().getBoard().getBoardItems()));
-  }  
-  
+  }
+
   private static class TargetsAndPositions {
     private List<Target> targets = new ArrayList<>();
     private List<Position> positions = new ArrayList<>();
     private List<Integer> targetIndex = new ArrayList<>();
-  }  
-  
+  }
+
   private void doGetTargets(HttpServletRequest request, HttpServletResponse response) throws IOException {
-    PrintWriter out = response.getWriter();    
+    PrintWriter out = response.getWriter();
     response.setContentType("text/plain");
     response.setStatus(HttpServletResponse.SC_OK);
     Map<Target, Position> targetsToPositions = getGame().getBoard().getTargetsToPositions();
@@ -275,21 +302,21 @@ public class RicochetRobotsServlet extends HttpServlet {
     targetsAndPositions.targets = new ArrayList<>(targetsToPositions.keySet());
     targetsAndPositions.positions = new ArrayList<>(targetsToPositions.values());
     Gson gson = new Gson();
-    String jsonString = gson.toJson(targetsAndPositions); 
+    String jsonString = gson.toJson(targetsAndPositions);
     out.println(jsonString);
   }
-  
+
   private void doGetGame(HttpServletRequest request, HttpServletResponse response) throws IOException {
-    PrintWriter out = response.getWriter();    
+    PrintWriter out = response.getWriter();
     response.setContentType("text/plain");
     response.setStatus(HttpServletResponse.SC_OK);
     Gson gson = new Gson();
-    String jsonString = gson.toJson(getGame()); 
+    String jsonString = gson.toJson(getGame());
     out.println(jsonString);
   }
- 
+
   private void doGetBoardState(HttpServletRequest request, HttpServletResponse response) throws IOException {
-    PrintWriter out = response.getWriter();    
+    PrintWriter out = response.getWriter();
     response.setContentType("text/plain");
     response.setStatus(HttpServletResponse.SC_OK);
     Gson gson = new Gson();
@@ -304,8 +331,7 @@ public class RicochetRobotsServlet extends HttpServlet {
     }
     return gson.toJson(moves);
   }
-  
-  
+
   public void destroy() {
   }
 }
