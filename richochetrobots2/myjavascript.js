@@ -46,7 +46,7 @@ function ajaxGetLatestChangesFromServer(){
   $.ajax({
     url : "/ricochet/getlatestchanges?version=" + currentVersion,
     success : function(result) {
-      appendMessageWithDate(result);
+      displayLatestChanges(result);
       
       var updateEventList = JSON.parse(result);
 
@@ -67,10 +67,22 @@ function ajaxGetLatestChangesFromServer(){
 }
 
 function processUpdateEvent(updateEvent, actionWhenDone) {
+  
+  // Game was reset on server
+  if (currentVersion > updateEvent.currentVersion) {
+    writeMessage("Game was reset.");
+    clearLatestChangesMessages();
+  }
   currentVersion = updateEvent.currentVersion;
   
   var shouldExecuteActionWhenDone = true;
   switch (updateEvent.eventType){
+    case "TARGET_SET":
+      var oldTarget = updateEvent.eventData.oldTarget;
+      var newTarget = updateEvent.eventData.newTarget;
+      var position = updateEvent.eventData.position;
+      clearAllTargetsAndShowNewTarget(newTarget, position);
+      break;
     case "ROBOT_GLIDED":
       var robot = getRobotFromColor(updateEvent.eventData.robot);
       var oldPositon = updateEvent.eventData.oldPosition;
@@ -85,12 +97,6 @@ function processUpdateEvent(updateEvent, actionWhenDone) {
       var newPosition = updateEvent.eventData.newPosition;
       moveRobotJumpToPosition(robot, newPosition, actionWhenDone);
       break;
-    case "TARGET_SET":
-      var oldTarget = updateEvent.eventData.oldTarget;
-      var newTarget = updateEvent.eventData.newTarget;
-      var position = updateEvent.eventData.position;
-      clearAllTargetsAndShowNewTarget(newTarget, position);
-      break;
   }
   
   if (shouldExecuteActionWhenDone) {
@@ -98,15 +104,10 @@ function processUpdateEvent(updateEvent, actionWhenDone) {
   }
 }
 
-function ajaxUpdateServerFromClient(){
-  
-}
-
-function ajaxUpdateClientFromServer(){
+function ajaxResetServer(){
   $.ajax({
-    url : "/ricochet/boardstate/get",
+    url : "/ricochet/game/reset",
     success : function(result) {
-      writeMessage("updateClientFromServer is not yet implemented. server boardState=" + result);
     }
   });
 }
@@ -287,7 +288,6 @@ function buildTargetsListBox(targets, positions){
 function clearAllTargetsAndShowNewTarget(target, position) {
   clearAllTargets();
   buildTarget(target, position);
-  document.getElementById("solveGameButton").style.visibility = "visible";
 }
 
 function buildTarget(target, position) {
@@ -336,7 +336,7 @@ function moveRobotGlideToPosition(robot, direction, cellPosition, actionWhenDone
     break;
   }
   totalMoves++;
-  writeMessage(totalMoves);
+  writeMessage("Total Moves: " + totalMoves);
 }
 
 function moveVerticalGlide(robot, newY, actionWhenDone) {
@@ -387,12 +387,16 @@ function writeMessage(message) {
   document.getElementById("message").innerHTML = message;
 }
 
-function appendMessageWithDate(message) {
+function clearLatestChangesMessages() {
+  document.getElementById("latestChangesMessages").innerHTML = "";
+}
+
+function displayLatestChanges(message) {
   var date = new Date();
   var dateString = date.getHours() + ":" + date.getMinutes() + ":" + date.getSeconds();
 
-  var currentMessage = document.getElementById("updates").innerHTML;
-  document.getElementById("updates").innerHTML = currentMessage + "<br>" + dateString + "  " + message;
+  var currentMessage = document.getElementById("latestChangesMessages").innerHTML;
+  document.getElementById("latestChangesMessages").innerHTML = currentMessage + "<br>" + dateString + "  " + message;
 }
 
 function getPositionOnCanvas(canvas, domEvent) {

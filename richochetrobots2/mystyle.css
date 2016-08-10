@@ -17,13 +17,6 @@
  z-index: 1;
 }
 
-
-#redSquare {
- fill: rgb(225, 0, 0);
- x: 520;
- y: 400;
-}
-
 .robot {
  visibility: hidden;
  position: absolute;
@@ -48,4 +41,9 @@
 #yellowRobot {
  top: 600;
  right: 0;
+}
+
+#debugDiv {
+  border-style: solid;
+  border-width: 2;
 }

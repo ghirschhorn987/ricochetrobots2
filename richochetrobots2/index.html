@@ -8,60 +8,57 @@
 </head>
 
 <body onload="init()">
-
   <div id="board">
     <canvas id="canvasBoard" width="640" height="640"></canvas>
-    <svg id="boardSvg" width="640" height="640">
-    </svg>
+    <svg id="boardSvg" width="640" height="640"></svg>
 
     <img class="robot" id="redRobot" width="40" height="40"
-      src="images/red_circle.svg" alt="Red Robot"
-      onclick="justClicked('Red')"> <img class="robot"
-      id="yellowRobot" width="40" height="40"
-      src="images/yellow_circle.png" alt="Yellow Robot"
-      onclick="justClicked('Yellow')"> <img class="robot"
-      id="greenRobot" width="40" height="40"
-      src="images/green_circle.svg" alt="Green Robot"
-      onclick="justClicked('Green')"> <img class="robot"
-      id="blueRobot" width="40" height="40" src="images/blue_circle.png"
-      alt="Blue Robot" onclick="justClicked('Blue')">
+      src="images/red_circle.svg"
+      onclick="justClicked('Red')">
+    <img class="robot" id="yellowRobot" width="40" height="40"
+      src="images/yellow_circle.png"
+      onclick="justClicked('Yellow')">
+    <img class="robot" id="greenRobot" width="40" height="40"
+      src="images/green_circle.svg"
+      onclick="justClicked('Green')">
+    <img class="robot" id="blueRobot" width="40" height="40"
+       src="images/blue_circle.png"
+      onclick="justClicked('Blue')">
   </div>
 
   <br/><br/>
   
-  
   <div id = "guesses">
-    Guess: <input id="guessBox" type="text"><br>
-    <button id="submitGuess" onclick="ajaxSubmitGuess()">
-    Submit
-    </button>
     <div>
-    Name: <input id="nameBox" type="text"><br>
-    <button id="submitName" onclick="ajaxAddNewPlayer()">
-    Submit
-    </button>
+    Guess: <input id="guessBox" type="text"> <button id="submitGuess" onclick="ajaxSubmitGuess()">Submit</button>
+    </div>
+    <div>
+    Name: <input id="nameBox" type="text"> <button id="submitName" onclick="ajaxAddNewPlayer()">Submit</button>
+    </div>
+  </div>
+
+  <div id="message"></div>
+  
+  <br/><hr><br/>
+  
+  <div id="debugDiv">
+    <strong>Debugging Controls</strong>
+    <br/>
+    <button id="solveGameButton" onclick="ajaxSolveGame()">Let computer solve</button>
+    &nbsp;&nbsp;
+    <button onclick="ajaxResetServer()">Reset Server</button>
+    &nbsp;&nbsp;
+    Change target to <select id="targetListBox" onchange="targetSelectedFromListBox()"></select>
+    
+    <br/><button onclick="clearLatestChangesMessages()">Clear Latest Changes Messages</button>
+    <div id="latestChangesMessages"></div>
+
+    <div>
+      <br /> <a href="/ricochet/board/walls/get">Walls</a>
+      <br /> <a href="/ricochet/board/targets/get">Targets</a>
+      <br /> <a href="/ricochet/boardstate/get">BoardState</a>
     </div>
   </div>
   
-  
-  
-  <div id="buttons">
-    Target: <select id="targetListBox" onchange="targetSelectedFromListBox()"></select>
-    <button id="solveGameButton" onclick="ajaxSolveGame()" style="visibility:hidden">Solve game</button>
-    <br />
-    
-    <button onclick="ajaxUpdateClientFromServer()"> Update Client From Server</button>
-    <button onclick="ajaxUpdateServerFromClient()"> Update Server From Client</button>
-        
-    <div id="message"></div>
-    <div id="updates"></div>
-
-    <br /> <a href="/ricochet/board/walls/get">Walls</a>
-    <br /> <a href="/ricochet/board/targets/get">Targets</a>
-    <br /> <a href="/ricochet/boardstate/get">BoardState</a>
-    </div>
-  
 </body>
-
-
 </html>
