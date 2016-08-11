@@ -121,7 +121,7 @@ public class RicochetRobotsServlet extends HttpServlet {
 
   private synchronized List<UpdateEvent> getUpdateEventsSince(int oldVersion) {
     int currentVersion = getUpdateVersion();
-    if (oldVersion == currentVersion) {
+    if (oldVersion >= currentVersion) {
       return new ArrayList<UpdateEvent>();
     }
     
@@ -301,33 +301,40 @@ public class RicochetRobotsServlet extends HttpServlet {
     if (movesTypeParam != null) {
       movesType = UnprocessedMovesType.valueOf(movesTypeParam);
     }
+    
+    String numberOfRoundsString = request.getParameter("numberOfRounds");
+    int numberOfRounds = (numberOfRoundsString == null) ? 1 : Integer.parseInt(numberOfRoundsString);
 
     Game game = getGame();
     if (getSolver() != null) {
       getSolver().tryToCancel();
     }
-    Solver newSolver = (new SolverFactory()).createSolver(game, movesType);
-    setSolver(newSolver);
-    List<MoveNode> winningMoves = newSolver.solve();
-    if (winningMoves.isEmpty()) {
-      // Solver was cancelled or couldn't find a solution. Should send this info to client.
-    }
-    else {
-      MoveNode winningMove = winningMoves.get(0);      
-      for (MoveNode moveNode : winningMove.getAncestorsFromRootDownToSelf()) {
-        Move move = moveNode.getMove();
-        if (move != null) {
-          Color robot = move.getRobot();
-          Direction direction = move.getDirection();
-          Position oldPosition = getBoardState().getRobotPosition(robot);
-          Position newPosition = MoveCalculator.calculateRobotPositionAfterMoving(getBoardState(), getGame().getBoard(),
-                robot, direction);
-        
-          updateBoardState(robot, newPosition);
-          addUpdateEvent(UpdateEventType.ROBOT_GLIDED, new RobotGlidedEventData(robot, oldPosition, newPosition, direction));      
-        }
+    
+    while (numberOfRounds > 0 && !game.getUnusedTargets().isEmpty()) {
+      Solver newSolver = (new SolverFactory()).createSolver(game, movesType);
+      setSolver(newSolver);
+      List<MoveNode> winningMoves = newSolver.solve();
+      if (winningMoves.isEmpty()) {
+        // Solver was cancelled or couldn't find a solution. Should send this info to client.
       }
-      doGetChooseNewTarget(request, response);
+      else {
+        MoveNode winningMove = winningMoves.get(0);      
+        for (MoveNode moveNode : winningMove.getAncestorsFromRootDownToSelf()) {
+          Move move = moveNode.getMove();
+          if (move != null) {
+            Color robot = move.getRobot();
+            Direction direction = move.getDirection();
+            Position oldPosition = getBoardState().getRobotPosition(robot);
+            Position newPosition = MoveCalculator.calculateRobotPositionAfterMoving(getBoardState(), getGame().getBoard(),
+                  robot, direction);
+          
+            updateBoardState(robot, newPosition);
+            addUpdateEvent(UpdateEventType.ROBOT_GLIDED, new RobotGlidedEventData(robot, oldPosition, newPosition, direction));      
+          }
+        }
+        doGetChooseNewTarget(request, response);
+        numberOfRounds--;
+      }
     }
   }
 

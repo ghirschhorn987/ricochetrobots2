@@ -195,10 +195,10 @@ function ajaxSetTarget(targetColorAndShapeString) {
   });
 }
 
-function ajaxSolveGame() {
-  writeMessage("Solving game. Please have patience...");
+function ajaxSolveGame(numberOfRounds) {
+  writeMessage("Solving " + numberOfRounds + " rounds. Please have patience...");
   $.ajax({
-    url : "/ricochet/game/solve",
+    url : "/ricochet/game/solve?numberOfRounds=" + numberOfRounds,
     success : function(result) {
     }
   });
