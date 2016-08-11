@@ -11,6 +11,7 @@ import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.logging.Logger;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
@@ -36,6 +37,9 @@ import org.hirschhorn.ricochet.solver.MoveNode;
 import org.hirschhorn.ricochet.solver.Solver;
 import org.hirschhorn.ricochet.solver.SolverFactory;
 import org.hirschhorn.ricochet.solver.UnprocessedMovesType;
+import org.hirschhorn.ricochet.updateevent.GameRestartedEventData;
+import org.hirschhorn.ricochet.updateevent.GuessSubmittedEventData;
+import org.hirschhorn.ricochet.updateevent.PlayerAddedEventData;
 import org.hirschhorn.ricochet.updateevent.RobotGlidedEventData;
 import org.hirschhorn.ricochet.updateevent.RobotJumpedEventData;
 import org.hirschhorn.ricochet.updateevent.TargetSetEventData;
@@ -46,21 +50,26 @@ public class RicochetRobotsServlet extends HttpServlet {
 
   private static final long serialVersionUID = 153254652788906133L;
   private static final long LATEST_CHANGES_TIMEOUT_MILLIS = 10000;
+  
+  private static Logger logger = Logger.getLogger(RicochetRobotsServlet.class.getName());
 
   public void init() throws ServletException {
-    initializeGame(0);
+    logger.info("Entering Servlet.init()");
+    if (getUpdateEvents() == null) {   
+      logger.info("In Servlet.init(). Initializing.");
+      intializeUpdateEvents();
+      initializeGame(0);
+    }
   }
 
   private void initializeGame(int targetIndex) {
     Game game = (new GameFactory()).createGame(targetIndex);
-    getServletContext().setAttribute("GAME", game);    
-    intializeUpdateEvents();
+    getServletContext().setAttribute("GAME", game);
         
     for (Color robot : Color.values()) {
       Position newPosition = getBoardState().getRobotPosition(robot);
       UpdateEventData eventData = new RobotJumpedEventData(robot, null, newPosition);
-      addUpdateEvent(new UpdateEvent(
-              UpdateEventType.ROBOT_JUMPED, eventData, getUpdateVersion() + 1));
+      addUpdateEvent(UpdateEventType.ROBOT_JUMPED, eventData);
     }
     
     Target oldTarget = null;
@@ -82,11 +91,16 @@ public class RicochetRobotsServlet extends HttpServlet {
 
   private synchronized void intializeUpdateEvents() {
     getServletContext().setAttribute("UPDATE_EVENTS", new ArrayList<UpdateEvent>());    
+    getServletContext().setAttribute("LAST_GAME_RESTART_EVENT", 0);    
   }
   
   @SuppressWarnings("unchecked")
-  private synchronized void addUpdateEvent(UpdateEvent updateEvent) {
+  private synchronized void addUpdateEvent(UpdateEventType updateEventType, UpdateEventData updateEventData) {
+    UpdateEvent updateEvent = new UpdateEvent(updateEventType, updateEventData, getUpdateVersion() + 1);
     ((List<UpdateEvent>) getServletContext().getAttribute("UPDATE_EVENTS")).add(updateEvent);
+    if (updateEvent.getEventType().equals(UpdateEventType.GAME_RESTARTED)) {
+      getServletContext().setAttribute("LAST_GAME_RESTART_EVENT", updateEvent.getCurrentVersion());  
+    }
   }
   
   @SuppressWarnings("unchecked")
@@ -94,9 +108,12 @@ public class RicochetRobotsServlet extends HttpServlet {
     return (List<UpdateEvent>) getServletContext().getAttribute("UPDATE_EVENTS");
   }
 
-  @SuppressWarnings("unchecked")
   private synchronized int getUpdateVersion() {
-    return ((List<UpdateEvent>)getServletContext().getAttribute("UPDATE_EVENTS")).size();
+    return getUpdateEvents().size() - 1;
+  }
+  
+  private synchronized Integer getLastGameRestartVersion() {
+    return (Integer)getServletContext().getAttribute("LAST_GAME_RESTART_EVENT");
   }
 
   private boolean hasChangedSince(int updateVersion) {
@@ -109,11 +126,11 @@ public class RicochetRobotsServlet extends HttpServlet {
       return new ArrayList<UpdateEvent>();
     }
     
-    if (oldVersion < currentVersion) {
+    int lastGameRestartVersion = getLastGameRestartVersion();
+    if (oldVersion >= lastGameRestartVersion) {
       return new ArrayList<>(getUpdateEvents().subList(oldVersion, currentVersion));
     } else {
-      // Old version is greater than current version.  Server must have been reset, return all events
-      return new ArrayList<>(getUpdateEvents());
+      return new ArrayList<>(getUpdateEvents().subList(lastGameRestartVersion, currentVersion));
     }
   }
 
@@ -141,8 +158,8 @@ public class RicochetRobotsServlet extends HttpServlet {
       case "/boardstate/get":
         doGetBoardState(request, response);
         break;
-      case "/game/reset":
-        doResetGame(request, response);
+      case "/game/restart":
+        doRestartGame(request, response);
         break;
       case "/game/solve":
         doGetSolveGame(request, response);
@@ -162,6 +179,9 @@ public class RicochetRobotsServlet extends HttpServlet {
       case "/submit/guess":
         doSubmitGuess(request, response);
         break;
+      case "/submit/newplayer":
+        doAddNewPlayer(request, response);
+        break;
       default:
         response.setContentType("text/html");
         response.setStatus(HttpServletResponse.SC_NOT_FOUND);
@@ -169,8 +189,20 @@ public class RicochetRobotsServlet extends HttpServlet {
     }
   }
 
+  private void doAddNewPlayer(HttpServletRequest request, HttpServletResponse response) {
+    String playerId = request.getParameter("playerId");
+    Game game = getGame();
+    game.addToPlayerIds(playerId);
+    addUpdateEvent(UpdateEventType.PLAYER_ADDED, new PlayerAddedEventData(request.getParameter("playerId")));
+  }
+
   private void doSubmitGuess(HttpServletRequest request, HttpServletResponse response) {
-    getGame().addGuessToMap(request.getParameter("playerId"), Integer.getInteger(request.getParameter("guess")));
+    String guesserId = request.getParameter("guesserId");
+    String guess = request.getParameter("guess");
+    getGame().addGuessToMap(guesserId, Integer.parseInt(guess));
+    addUpdateEvent(
+        UpdateEventType.GUESS_SUBMITTED,
+        new GuessSubmittedEventData(request.getParameter("guesserId"), Integer.parseInt(request.getParameter("guess"))));
   }
 
   private void doGetLatestChanges(HttpServletRequest request, HttpServletResponse response) throws IOException {
@@ -203,10 +235,7 @@ public class RicochetRobotsServlet extends HttpServlet {
   
   private void changeTarget(Target oldTarget, Target newTarget) {
     getBoardState().setChosenTarget(newTarget);
-
-    UpdateEvent updateEvent = new UpdateEvent(UpdateEventType.TARGET_SET,
-            new TargetSetEventData(oldTarget, newTarget, getPosition(newTarget)), getUpdateVersion() + 1);
-    addUpdateEvent(updateEvent);    
+    addUpdateEvent(UpdateEventType.TARGET_SET, new TargetSetEventData(oldTarget, newTarget, getPosition(newTarget)));    
   }
 
   private void doGetChooseNewTarget(HttpServletRequest request, HttpServletResponse response) throws IOException {
@@ -249,12 +278,8 @@ public class RicochetRobotsServlet extends HttpServlet {
     Position newPosition = MoveCalculator.calculateRobotPositionAfterMoving(getBoardState(), getGame().getBoard(),
             robot, direction);
     updateBoardState(robot, newPosition);
-        
-    UpdateEvent updateEvent = new UpdateEvent(
-            UpdateEventType.ROBOT_GLIDED,
-            new RobotGlidedEventData(robot, oldPosition, newPosition, direction),
-            getUpdateVersion() + 1);
-    addUpdateEvent(updateEvent);
+
+    addUpdateEvent(UpdateEventType.ROBOT_GLIDED, new RobotGlidedEventData(robot, oldPosition, newPosition, direction));
   }
 
   private boolean isWinner(Color robot, Board board, BoardState boardState) {
@@ -263,9 +288,10 @@ public class RicochetRobotsServlet extends HttpServlet {
     return boardState.getRobotPosition(targetColor).equals(board.getTargetPosition(chosenTarget));
   }
   
-  private void doResetGame(HttpServletRequest request, HttpServletResponse response) throws IOException {
+  private synchronized void doRestartGame(HttpServletRequest request, HttpServletResponse response) throws IOException {
     getSolver().tryToCancel();
     initializeGame(0);
+    addUpdateEvent(UpdateEventType.GAME_RESTARTED, new GameRestartedEventData());
   }  
 
   private void doGetSolveGame(HttpServletRequest request, HttpServletResponse response) throws IOException {
@@ -299,12 +325,7 @@ public class RicochetRobotsServlet extends HttpServlet {
                 robot, direction);
         
           updateBoardState(robot, newPosition);
-            
-          UpdateEvent updateEvent = new UpdateEvent(
-                  UpdateEventType.ROBOT_GLIDED,
-                  new RobotGlidedEventData(robot, oldPosition, newPosition, direction),
-                  getUpdateVersion() + 1);
-          addUpdateEvent(updateEvent);      
+          addUpdateEvent(UpdateEventType.ROBOT_GLIDED, new RobotGlidedEventData(robot, oldPosition, newPosition, direction));      
         }
       }
       doGetChooseNewTarget(request, response);

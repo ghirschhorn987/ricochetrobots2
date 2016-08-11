@@ -25,7 +25,22 @@
        src="images/blue_circle.png"
       onclick="justClicked('Blue')">
   </div>
-
+  <div>
+  <table id="playerIds">
+  <tr>
+    <th>
+    Players
+    <th>
+  <tr>
+  </table>
+  <table id="guesses">
+  <tr>
+    <th>
+    Guesses
+    <th>
+  <tr>
+  </table>
+  </div>
   <br/><br/>
   
   <div id = "guesses">
@@ -33,7 +48,7 @@
     Guess: <input id="guessBox" type="text"> <button id="submitGuess" onclick="ajaxSubmitGuess()">Submit</button>
     </div>
     <div>
-    Name: <input id="nameBox" type="text"> <button id="submitName" onclick="ajaxAddNewPlayer()">Submit</button>
+    Name: <input id="nameBox" type="text"> <button id="submitName" onclick="ajaxAddNewPlayer()">Add Player</button>
     </div>
   </div>
 
@@ -46,7 +61,7 @@
     <br/>
     <button id="solveGameButton" onclick="ajaxSolveGame()">Let computer solve</button>
     &nbsp;&nbsp;
-    <button onclick="ajaxResetServer()">Reset Server</button>
+    <button onclick="ajaxRestartGame()">Restart Game</button>
     &nbsp;&nbsp;
     Change target to <select id="targetListBox" onchange="targetSelectedFromListBox()"></select>
     
@@ -59,6 +74,5 @@
       <br /> <a href="/ricochet/boardstate/get">BoardState</a>
     </div>
   </div>
-  
 </body>
 </html>

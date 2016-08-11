@@ -76,16 +76,14 @@ function ajaxGetLatestChangesFromServer(){
 }
 
 function processUpdateEvent(updateEvent, actionWhenDone) {
-  
-  // Game was reset on server
-  if (currentVersion > updateEvent.currentVersion) {
-    writeMessage("Game was reset.");
-    clearLatestChangesMessages();
-  }
   currentVersion = updateEvent.currentVersion;
-  
   var shouldExecuteActionWhenDone = true;
+  
   switch (updateEvent.eventType){
+    case "GAME_RESTARTED":
+      writeMessage("Game restarted.");
+      clearLatestChangesMessages();
+      break;
     case "TARGET_SET":
       var oldTarget = updateEvent.eventData.oldTarget;
       var newTarget = updateEvent.eventData.newTarget;
@@ -106,6 +104,15 @@ function processUpdateEvent(updateEvent, actionWhenDone) {
       var newPosition = updateEvent.eventData.newPosition;
       moveRobotJumpToPosition(robot, newPosition, actionWhenDone);
       break;
+    case "PLAYER_ADDED":
+      var playerName = updateEvent.eventData.playerId;
+      addPlayer(playerName);
+      break;
+    case "GUESS_SUBMITTED":
+      var guess = updateEvent.eventData.guess;
+      var guesser = updateEvent.eventData.guesserId;
+      addGuess(guesser + ": " + guess);
+      
   }
   
   if (shouldExecuteActionWhenDone) {
@@ -113,9 +120,9 @@ function processUpdateEvent(updateEvent, actionWhenDone) {
   }
 }
 
-function ajaxResetServer(){
+function ajaxRestartGame(){
   $.ajax({
-    url : "/ricochet/game/reset",
+    url : "/ricochet/game/restart",
     success : function(result) {
     }
   });
@@ -124,9 +131,8 @@ function ajaxResetServer(){
 function ajaxSubmitGuess(){
   var guess = document.getElementById('guessBox').value;
   $.ajax({
-    url : "/ricochet/submit/guess?playerId=" + playerId + "&guess=" + guess,
+    url : "/ricochet/submit/guess?guesserId=" + playerId + "&guess=" + guess,
     success : function(result) {
-      writeMessage("Guess has been submitted:" + guess);
     }
   });
 }
@@ -138,7 +144,6 @@ function ajaxAddNewPlayer(){
   $.ajax({
     url : "/ricochet/submit/newplayer?playerId=" + playerId,
     success : function(result) {
-      writeMessage("Player Has Been Added:" + guess);
     }
   });
 }
@@ -225,6 +230,7 @@ function ajaxCheckForWinner(robot) {
       var isWinner = JSON.parse(result);
       if (isWinner == true) {
         writeMessage("CONGRATULATIONS! YOU WON: " + result);
+        ajaxChooseNewTarget();
       }
     }
   });
@@ -365,7 +371,7 @@ function moveRobotGlideToPosition(robot, direction, cellPosition, actionWhenDone
 }
 
 function moveVerticalGlide(robot, newY, actionWhenDone) {
-  y = robot.offsetTop;
+  var y = robot.offsetTop;
   if (newY > y) {
     robot.style.top = y + 2;
   }
@@ -385,7 +391,7 @@ function moveVerticalGlide(robot, newY, actionWhenDone) {
 }
 
 function moveHorizontalGlide(robot, newX, actionWhenDone) {
-  x = robot.offsetLeft;
+  var x = robot.offsetLeft;
   if (newX > x) {
     robot.style.left = x + 2;
   }
@@ -510,4 +516,13 @@ function getColorFromRobot(robot) {
     break;
   }
   return color;
+}
+
+function addPlayer(player){
+  var row = document.getElementById("playerIds").insertRow(-1);
+  row.innerHTML = player;
+}
+function addGuess(guess){
+  var row = document.getElementById("guesses").insertRow(-1);
+  row.innerHTML = guess;
 }
