@@ -37,6 +37,7 @@ import org.hirschhorn.ricochet.solver.MoveNode;
 import org.hirschhorn.ricochet.solver.Solver;
 import org.hirschhorn.ricochet.solver.SolverFactory;
 import org.hirschhorn.ricochet.solver.UnprocessedMovesType;
+import org.hirschhorn.ricochet.updateevent.CountdownStartedEventData;
 import org.hirschhorn.ricochet.updateevent.GameRestartedEventData;
 import org.hirschhorn.ricochet.updateevent.GuessSubmittedEventData;
 import org.hirschhorn.ricochet.updateevent.PlayerAddedEventData;
@@ -74,6 +75,8 @@ public class RicochetRobotsServlet extends HttpServlet {
     Target oldTarget = null;
     Target newTarget = Target.getTarget(Color.Red, Shape.Star);
     changeTarget(oldTarget, newTarget);    
+    
+    game.setPhase(1);
   }
 
   private Game getGame() {
@@ -95,7 +98,9 @@ public class RicochetRobotsServlet extends HttpServlet {
   
   @SuppressWarnings("unchecked")
   private synchronized void addUpdateEvent(UpdateEventType updateEventType, UpdateEventData updateEventData) {
-    UpdateEvent updateEvent = new UpdateEvent(updateEventType, updateEventData, getUpdateVersion() + 1);
+    int newVersion = getUpdateVersion() + 1;
+    logger.info("Add UpdateEvent: " + newVersion);
+    UpdateEvent updateEvent = new UpdateEvent(updateEventType, updateEventData, newVersion);
     ((List<UpdateEvent>) getServletContext().getAttribute("UPDATE_EVENTS")).add(updateEvent);
     if (updateEvent.getEventType().equals(UpdateEventType.GAME_RESTARTED)) {
       getServletContext().setAttribute("LAST_GAME_RESTART_EVENT", updateEvent.getCurrentVersion());  
@@ -121,16 +126,27 @@ public class RicochetRobotsServlet extends HttpServlet {
 
   private synchronized List<UpdateEvent> getUpdateEventsSince(int oldVersion) {
     int currentVersion = getUpdateVersion();
-    if (oldVersion >= currentVersion) {
+    if (oldVersion == currentVersion) {
+      // Client and server are at same version so nothing changed -- return empty list.
       return new ArrayList<UpdateEvent>();
-    }
-    
+    } 
+
     int lastGameRestartVersion = getLastGameRestartVersion();
-    if (oldVersion >= lastGameRestartVersion) {
-      return new ArrayList<>(getUpdateEvents().subList(oldVersion, currentVersion + 1));
-    } else {
+
+    // Client is at version AFTER server. This can only happen if server was restarted, but client
+    // was not. This should be rare, but if it happens, pretend client is at version right before
+    // the last restart.
+    if (oldVersion >= currentVersion) {
+      oldVersion = lastGameRestartVersion - 1;
+    }
+
+    // Client is at version before last server restart. Only return events since last restart, not before.
+    if (oldVersion < lastGameRestartVersion) {
       return new ArrayList<>(getUpdateEvents().subList(lastGameRestartVersion, currentVersion + 1));
     }
+    
+    // Client is before server. Return all events since client version.
+    return new ArrayList<>(getUpdateEvents().subList(oldVersion + 1, currentVersion + 1));
   }
 
   private BoardState getBoardState() {
@@ -198,10 +214,16 @@ public class RicochetRobotsServlet extends HttpServlet {
   private void doSubmitGuess(HttpServletRequest request, HttpServletResponse response) {
     String guesserId = request.getParameter("guesserId");
     String guess = request.getParameter("guess");
-    getGame().addGuessToMap(guesserId, Integer.parseInt(guess));
-    addUpdateEvent(
-        UpdateEventType.GUESS_SUBMITTED,
-        new GuessSubmittedEventData(request.getParameter("guesserId"), Integer.parseInt(request.getParameter("guess"))));
+    if (getGame().getPhase() == 1) {
+      getGame().addGuessToMap(guesserId, Integer.parseInt(guess));
+      addUpdateEvent(
+          UpdateEventType.GUESS_SUBMITTED,
+          new GuessSubmittedEventData(request.getParameter("guesserId"), Integer.parseInt(request.getParameter("guess"))));
+      if (getGame().isFirstGuess()) {
+        getGame().startCountdownToChangePhase();
+        addUpdateEvent(UpdateEventType.COUNTDOWN_STARTED, new CountdownStartedEventData());
+      }
+    }
   }
 
   private void doGetLatestChanges(HttpServletRequest request, HttpServletResponse response) throws IOException {
@@ -276,9 +298,12 @@ public class RicochetRobotsServlet extends HttpServlet {
     Position oldPosition = getBoardState().getRobotPosition(robot);
     Position newPosition = MoveCalculator.calculateRobotPositionAfterMoving(getBoardState(), getGame().getBoard(),
             robot, direction);
-    updateBoardState(robot, newPosition);
-
-    addUpdateEvent(UpdateEventType.ROBOT_GLIDED, new RobotGlidedEventData(robot, oldPosition, newPosition, direction));
+    String moverId = request.getParameter("moverId");
+    Game game = getGame();
+    if (game.getPhase() == 2 && game.getPlayerAllowedToMove() == moverId){
+      updateBoardState(robot, newPosition);
+      addUpdateEvent(UpdateEventType.ROBOT_GLIDED, new RobotGlidedEventData(robot, oldPosition, newPosition, direction));
+    }
   }
 
   private boolean isWinner(Color robot, Board board, BoardState boardState) {

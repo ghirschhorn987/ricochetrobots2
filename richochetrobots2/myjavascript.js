@@ -84,6 +84,9 @@ function processUpdateEvent(updateEvent, actionWhenDone) {
       writeMessage("Game restarted.");
       clearLatestChangesMessages();
       break;
+    case "COUNTDOWN_STARTED":
+      startCountdownMillis(3000);
+      break;
     case "TARGET_SET":
       var oldTarget = updateEvent.eventData.oldTarget;
       var newTarget = updateEvent.eventData.newTarget;
@@ -217,7 +220,7 @@ function ajaxMoveRobotTowardPosition(robotColor, pos) {
 function ajaxMoveRobotTowardDirection(robotColor, direction, actionWhenDone) {
   $.ajax({
     url : "/ricochet/robot/move?robot=" + robotColor + "&direction="
-        + direction,
+        + direction + "&moverId=" + playerId,
     success : function(result) {
     }
   });
@@ -525,4 +528,8 @@ function addPlayer(player){
 function addGuess(guess){
   var row = document.getElementById("guesses").insertRow(-1);
   row.innerHTML = guess;
+}
+function startCountdownMillis(millis){
+  var d = new Date();
+  var timer = millis(); 
 }
