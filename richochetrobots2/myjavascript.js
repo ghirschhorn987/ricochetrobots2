@@ -10,8 +10,6 @@ contextBoard = null;
 totalMoves = 0;
 currentVersion = -1;
 playerId = "test";
-round = 0;
-phase = 0;
 
 function init() {
   canvasBoard = document.getElementById("canvasBoard");
@@ -42,13 +40,18 @@ function init() {
   getRobotFromColor("Blue").style.visibility = "visible";
 }
 
-function ajaxGetLatestChangesFromServer(){
+function ajaxGetLatestChangesFromServer() {
+  displayLatestChanges("--------- Requesting changes from server since " + currentVersion);
   $.ajax({
     url : "/ricochet/getlatestchanges?version=" + currentVersion,
     success : function(result) {
-      displayLatestChanges(result);
-      
       var updateEventList = JSON.parse(result);
+      var eventCount = updateEventList.length;
+      displayLatestChanges("Received " + eventCount + "changes from server since " + currentVersion + ": " + result);
+      if (updateEventList.length > 0) {
+        document.getElementById("latestChangesMessages").style.backgroundColor = "yellow";
+        displayLatestChanges("Events from " + updateEventList[0].currentVersion + " to " + updateEventList[eventCount - 1]);
+      }
 
       // Create a function that processes a single element in the list, and when done
       // calls itself with the next element.  If there are no elements in list, then
@@ -65,6 +68,7 @@ function ajaxGetLatestChangesFromServer(){
               });
         } else {
           // No more events to process -- get more from server.
+          document.getElementById("latestChangesMessages").style.backgroundColor = null;
           setTimeout(ajaxGetLatestChangesFromServer, 10);          
         } 
       };
@@ -86,6 +90,9 @@ function processUpdateEvent(updateEvent, actionWhenDone) {
       break;
     case "COUNTDOWN_STARTED":
       startCountdownMillis(3000);
+      break;
+    case "PLAYER_TO_MOVE_CHANGED":
+      writeMessage("Player to Move:" + updateEvent.eventData.player);
       break;
     case "TARGET_SET":
       var oldTarget = updateEvent.eventData.oldTarget;

@@ -29,6 +29,7 @@ import org.hirschhorn.ricochet.game.Game;
 import org.hirschhorn.ricochet.game.GameFactory;
 import org.hirschhorn.ricochet.game.Move;
 import org.hirschhorn.ricochet.game.MoveCalculator;
+import org.hirschhorn.ricochet.game.Phase;
 import org.hirschhorn.ricochet.game.RobotPositions;
 import org.hirschhorn.ricochet.game.UpdateEvent;
 import org.hirschhorn.ricochet.game.UpdateEventData;
@@ -76,7 +77,7 @@ public class RicochetRobotsServlet extends HttpServlet {
     Target newTarget = Target.getTarget(Color.Red, Shape.Star);
     changeTarget(oldTarget, newTarget);    
     
-    game.setPhase(1);
+    game.setPhase(Phase.GUESSING);
   }
 
   private Game getGame() {
@@ -214,7 +215,7 @@ public class RicochetRobotsServlet extends HttpServlet {
   private void doSubmitGuess(HttpServletRequest request, HttpServletResponse response) {
     String guesserId = request.getParameter("guesserId");
     String guess = request.getParameter("guess");
-    if (getGame().getPhase() == 1) {
+    if (getGame().getPhase().equals(Phase.GUESSING)) {
       getGame().addGuessToMap(guesserId, Integer.parseInt(guess));
       addUpdateEvent(
           UpdateEventType.GUESS_SUBMITTED,
@@ -300,9 +301,21 @@ public class RicochetRobotsServlet extends HttpServlet {
             robot, direction);
     String moverId = request.getParameter("moverId");
     Game game = getGame();
-    if (game.getPhase() == 2 && game.getPlayerAllowedToMove() == moverId){
-      updateBoardState(robot, newPosition);
-      addUpdateEvent(UpdateEventType.ROBOT_GLIDED, new RobotGlidedEventData(robot, oldPosition, newPosition, direction));
+    if (!game.getPhase().equals(Phase.SOLVING)) {
+      return;
+    }
+    if (!game.getPlayerToMove().equals(moverId)){
+      return;
+    }
+    if (game.playerSurpassedGuess()) {
+      //TODO set robobts back to positions
+      game.setAndRemoveNextPlayerToMove();
+      return;
+    }
+    updateBoardState(robot, newPosition);
+    addUpdateEvent(UpdateEventType.ROBOT_GLIDED, new RobotGlidedEventData(robot, oldPosition, newPosition, direction));
+    if (isWinner(robot, game.getBoard(), game.getBoardState())) {
+      game.goToNextRound();
     }
   }
 

@@ -4,6 +4,7 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -18,18 +19,22 @@ public class Game implements Serializable {
   private BoardState boardState;
   private List<Target> unusedTargets;
   private int round;
-  private int phase;
+  private Phase phase;
   private Map<String, Integer> playersToGuesses;
   private List<String> playerIds;
-  private Map<Integer, String> firstGuessToPlayer;
+  private String playerToMove;
+
+  public String getPlayerToMove() {
+    return playerToMove;
+  }
 
   public Game(Board board, BoardState boardState) {
     this.board = board;
     this.boardState = boardState;
     playerIds = new ArrayList<>();
-    playersToGuesses = new HashMap<>();
+    playersToGuesses = new LinkedHashMap<>();
     unusedTargets = Target.buildAllTargets();
-    firstGuessToPlayer = new HashMap<>();
+    playerToMove = null;
   }
 
   public Board getBoard() {
@@ -41,7 +46,7 @@ public class Game implements Serializable {
   }
 
   public void updateBoardState(BoardState newBoardState) {
-    this.boardState = newBoardState;
+    boardState = newBoardState;
   }
   
   public List<Target> getUnusedTargets() {
@@ -53,9 +58,8 @@ public class Game implements Serializable {
   }
 
   public void addGuessToMap(String playerId, int guess) {
-    playersToGuesses.put(playerId, guess);
-    if (!firstGuessToPlayer.containsKey(guess)){
-      firstGuessToPlayer.put(guess, playerId);
+    if (!playersToGuesses.containsKey(playerId) || playersToGuesses.get(playerId) > guess) {
+      playersToGuesses.put(playerId, guess);
     }
   }
   
@@ -63,26 +67,33 @@ public class Game implements Serializable {
     playerIds.add(playerId);
   }
   
-  public int getPhase() {
+  public Phase getPhase() {
     return phase;
   }
 
-  public void setPhase(int phase) {
+  public void setPhase(Phase phase) {
     this.phase = phase;
-   }
+  }
 
-  public String getPlayerAllowedToMove() {
+  private void transitionToSolvingPhase() {
+    if (!phase.equals(Phase.GUESSING)) {
+      throw new AssertionError("Cannot transition to solving from " + phase);
+    }
+    setPhase(Phase.SOLVING);
+    setAndRemoveNextPlayerToMove();
+  }
+  
+  public void setAndRemoveNextPlayerToMove() {
     int lowestGuess = Integer.MAX_VALUE;
-    String playerToMove = null;
+    String candidate = null;
     for(Entry<String, Integer> entry : playersToGuesses.entrySet()) {
       if (entry.getValue() < lowestGuess) {
         lowestGuess = entry.getValue();
-        playerToMove = entry.getKey();
-      } else if (entry.getValue() == lowestGuess) {
-        playerToMove = firstGuessToPlayer.get(lowestGuess);
+        candidate = entry.getKey();
       }
     }
-    return playerToMove;
+    playersToGuesses.remove(candidate);
+    playerToMove = candidate;
   }
 
   public void startCountdownToChangePhase() {
@@ -92,13 +103,23 @@ public class Game implements Serializable {
      
     timer.schedule(new TimerTask() {
             public void run() {
-               setPhase(2);
+               transitionToSolvingPhase();
             }
         }, timeToRun);
   }
 
   public boolean isFirstGuess() {
     return playersToGuesses.isEmpty();
+  }
+
+  public boolean playerSurpassedGuess() {
+    // TODO Auto-generated method stub
+    return false;
+  }
+
+  public void goToNextRound() {
+    // TODO Auto-generated method stub
+    
   }
   
 }
