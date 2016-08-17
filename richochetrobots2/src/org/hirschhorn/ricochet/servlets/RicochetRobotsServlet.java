@@ -216,14 +216,14 @@ public class RicochetRobotsServlet extends HttpServlet {
     String guesserId = request.getParameter("guesserId");
     String guess = request.getParameter("guess");
     if (getGame().getPhase().equals(Phase.GUESSING)) {
-      getGame().addGuessToMap(guesserId, Integer.parseInt(guess));
-      addUpdateEvent(
-          UpdateEventType.GUESS_SUBMITTED,
-          new GuessSubmittedEventData(request.getParameter("guesserId"), Integer.parseInt(request.getParameter("guess"))));
       if (getGame().isFirstGuess()) {
         getGame().startCountdownToChangePhase();
         addUpdateEvent(UpdateEventType.COUNTDOWN_STARTED, new CountdownStartedEventData());
       }
+      getGame().addGuessToMap(guesserId, Integer.parseInt(guess));
+      addUpdateEvent(
+          UpdateEventType.GUESS_SUBMITTED,
+          new GuessSubmittedEventData(request.getParameter("guesserId"), Integer.parseInt(request.getParameter("guess"))));
     }
   }
 
@@ -237,6 +237,7 @@ public class RicochetRobotsServlet extends HttpServlet {
       } catch (InterruptedException e) {
         Thread.currentThread().interrupt();
       }
+      getGame().updateGuessingPhaseCountdown();
     }
     PrintWriter out = response.getWriter();
     Gson gson = new Gson();

@@ -23,6 +23,7 @@ public class Game implements Serializable {
   private Map<String, Integer> playersToGuesses;
   private List<String> playerIds;
   private String playerToMove;
+  private long guessingPhaseCountdownStartedTime;
 
   public String getPlayerToMove() {
     return playerToMove;
@@ -35,6 +36,7 @@ public class Game implements Serializable {
     playersToGuesses = new LinkedHashMap<>();
     unusedTargets = Target.buildAllTargets();
     playerToMove = null;
+    guessingPhaseCountdownStartedTime = 0;
   }
 
   public Board getBoard() {
@@ -96,16 +98,12 @@ public class Game implements Serializable {
     playerToMove = candidate;
   }
 
-  public void startCountdownToChangePhase() {
-    int interval = 30000; // 30 sec
-    Date timeToRun = new Date(System.currentTimeMillis() + interval);
-    Timer timer = new Timer();
-     
-    timer.schedule(new TimerTask() {
-            public void run() {
-               transitionToSolvingPhase();
-            }
-        }, timeToRun);
+  public synchronized void startCountdownToChangePhase() {
+    //because its already started and only one person can start it
+    if(guessingPhaseCountdownStartedTime != 0){
+      return;
+    }
+    guessingPhaseCountdownStartedTime = System.currentTimeMillis();
   }
 
   public boolean isFirstGuess() {
@@ -120,6 +118,18 @@ public class Game implements Serializable {
   public void goToNextRound() {
     // TODO Auto-generated method stub
     
+  }
+
+  public synchronized long updateGuessingPhaseCountdown() {
+    if(guessingPhaseCountdownStartedTime == 0) {
+      return -1;
+    }
+    long millisecondsElapsed = System.currentTimeMillis() - guessingPhaseCountdownStartedTime;
+    if(millisecondsElapsed > 30000) {
+      transitionToSolvingPhase();
+      guessingPhaseCountdownStartedTime = 0;
+    }
+    return millisecondsElapsed;
   }
   
 }
