@@ -41,17 +41,24 @@ function init() {
 }
 
 function ajaxGetLatestChangesFromServer() {
-  displayLatestChanges("--------- Requesting changes from server since " + currentVersion);
+  displayLatestChanges("-------------------------");
+  displayLatestChanges("Requesting changes since version " + currentVersion);
   $.ajax({
     url : "/ricochet/getlatestchanges?version=" + currentVersion,
     success : function(result) {
       var updateEventList = JSON.parse(result);
       var eventCount = updateEventList.length;
-      displayLatestChanges("Received " + eventCount + "changes from server since " + currentVersion + ": " + result);
-      if (updateEventList.length > 0) {
+      var msg = "Received changes since version " + currentVersion + ". ";
+      if (eventCount == 0) {
+        msg = msg + "No events.";
+      } else {
         document.getElementById("latestChangesMessages").style.backgroundColor = "yellow";
-        displayLatestChanges("Events from " + updateEventList[0].currentVersion + " to " + updateEventList[eventCount - 1]);
+        var minEventVersion = updateEventList[0].currentVersion;
+        var maxEventVersion = updateEventList[eventCount - 1].currentVersion;
+        document.getElementById("highestKnownServerVersion").innerHTML = maxEventVersion; 
+        msg = msg + eventCount + " events (" + minEventVersion + "-" + maxEventVersion + "): " + result;
       }
+      displayLatestChanges(msg);
 
       // Create a function that processes a single element in the list, and when done
       // calls itself with the next element.  If there are no elements in list, then
@@ -81,6 +88,7 @@ function ajaxGetLatestChangesFromServer() {
 
 function processUpdateEvent(updateEvent, actionWhenDone) {
   currentVersion = updateEvent.currentVersion;
+  document.getElementById("currentClientVersion").innerHTML = currentVersion; 
   var shouldExecuteActionWhenDone = true;
   
   switch (updateEvent.eventType){
