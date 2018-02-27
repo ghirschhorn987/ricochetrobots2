@@ -1,0 +1,31 @@
+Solving in reverse:
+
+class RestrictionSet {
+  Set<Restrictions> restriction;
+}
+  
+class Restriction {
+  Robot robot;
+  Set<Position> positionsToAvoid;
+}
+
+MoveList getMovesNeeded(Robot robot, Position target, int maxMoves, RestrictionSet restrictions, BoardState boardState) {
+  Position robotPosition = getRobotPosition(boardState, robot);
+  if (robotPosition.equals(target)) {
+    return new MoveList();
+  }
+  // Find reverse positions from target with
+  for (Direction direction : getPossibleDirections(target, boardState)){
+    for (Position possiblePosition : getPossiblePositionsToMoveTo(target, direction, boardState)) {
+      Direction leftDirection = getDirectionToLeft(direction);
+      Direction rightDirection = getDirectionToRight(direction);
+      if (hasWall(possiblePosition, leftDirection)) {
+        
+      
+      
+      
+        Restriction restriction = buildRestriction(robot, getPositionsBetween(robotPosition, possiblePosition, direction, boardState)
+        
+      }
+    
+}
