@@ -14,12 +14,19 @@ MoveList getMovesNeeded(Robot robot, Position target, int maxMoves, RestrictionS
   if (robotPosition.equals(target)) {
     return new MoveList();
   }
-  // Find reverse positions from target with
+  // Find reverse positions from target and see if we can solve from there and then add the final path
   for (Direction direction : getPossibleDirections(target, boardState)){
-    for (Position possiblePosition : getPossiblePositionsToMoveTo(target, direction, boardState)) {
+    Position start = target;
+    Position end = Position.NO_END; // move until blocked
+    for (Position possiblePosition : getPossiblePositionsToMoveTo(start, end, direction, boardState)) {
+      // Direction is absoulte (North, East, etc.).  Left is 90 degress counter-clockwise from given direction. Right is opposite.
       Direction leftDirection = getDirectionToLeft(direction);
       Direction rightDirection = getDirectionToRight(direction);
       if (hasWall(possiblePosition, leftDirection)) {
+        Position start = possiblePosition;
+        Position end = Position.NO_END; // move until blocked 
+        for (Position possiblePosition : getPossiblePositionsToMoveTo(possiblePositions, direction, boardState)) {
+        
         
       
       
