@@ -14,6 +14,19 @@ MoveList getMovesNeeded(Robot robot, Position target, int maxMoves, RestrictionS
   if (robotPosition.equals(target)) {
     return new MoveList();
   }
+  
+  // First check if can solve with only moves by robot
+  MoveList moveList = getMovesNeededUsingOnlyRobot(robot, target, maxMoves, restrictions.clone(), boardState);
+  if (!moveList.equals(MoveList.NULL)) {
+    return moveList;
+  }
+  
+  // Then check if can solve with moves by other robot
+  return getMovesNeededUsingOnlyRobot(robot, target, maxMoves, restrictions.clone(), boardState);
+}
+
+MoveList getMovesNeededUsingOnlyRobot(Robot robot, Position target, int maxMoves, RestrictionSet restrictions, BoardState boardState) {
+  
   // Find reverse positions from target and see if we can solve from there and then add the final path
   for (Direction direction : getPossibleDirections(target, boardState)){
     Position start = target;
@@ -22,17 +35,18 @@ MoveList getMovesNeeded(Robot robot, Position target, int maxMoves, RestrictionS
       // Direction is absoulte (North, East, etc.).  Left is 90 degress counter-clockwise from given direction. Right is opposite.
       Direction leftDirection = getDirectionToLeft(direction);
       Direction rightDirection = getDirectionToRight(direction);
+      
       if (hasWall(possiblePosition, leftDirection)) {
-        Position start = possiblePosition;
-        Position end = Position.NO_END; // move until blocked 
-        for (Position possiblePosition : getPossiblePositionsToMoveTo(possiblePositions, direction, boardState)) {
-        
-        
-      
-      
-      
-        Restriction restriction = buildRestriction(robot, getPositionsBetween(robotPosition, possiblePosition, direction, boardState)
-        
+        MoveList previousMoveList = getMovesNeeded(robot, possiblePosition, maxMoves - 1, restrictions.clone(), boardState.clone());
+        if (!previousMoveList.equals(MoveList.NULL)) {
+          Move newMove = new Move(robot, possiblePosition, target);
+          // TODO: add check if there is a robot in positions in Move. If so move that robot.
+          previousMoveList.add(newMove);
+          return previousMoveList;
+        }
       }
-    
+    }
+  }
+  
+  return MoveList.NULL;
 }
