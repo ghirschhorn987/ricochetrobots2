@@ -80,32 +80,16 @@ RobotMoveList getMovesNeededUsingOnlyRobot(Robot robot, Position target, int max
       
         // Recursively see if we there are moves that get Robot to this position.
         RobotMoveList previousMoveList = getMovesNeeded(robot, possiblePosition, maxMoves - 1, restrictions.clone(), intialBoardState.clone());
-        if (!previousMoveList.equals(MoveList.NULL)) {
+        if (!previousMoveList.equals(RobotMoveList.NULL)) {
         
           // We found a list of moves. Add a final move to the target and then return the new move list and the modified board
           // state.
-          BoardState newBoardState = previousMoveList.getFinalBoardState().clone();
           Move newMove = new Move(possiblePosition, target):
+          blockingRobotMoveList = moveRobotOutOfWayIfNeeded(newMove, robot, previousMoveList.getFinalBoardState());
+          if (blockingRobotMoveList.equals(MoveList.NULL
           
-          // If there are any robots blocking, move them out of way
-          boolean checkForBlocking = true;
-          while (checkForBlocking) {
-            Position blockingRobotPosition = getPositionOfOtherRobotBlockingMove(newMove, robot, newBoardState);
-            if (blockingPosition == null) {
-              checkForBlocking = false;
-            } else {
-              Robot blockingRobot = newBoardState.getRobotAt(blockingRobotPosition);
-              Move blockinmove(blockingRobotPosition, EnumSet.of(leftDirectionm, rightDirections), newBoardState);
-              newBoardState.move(blockingRobot, blockingRobotMove);
-              newBoardState = moveBlockingRobot.getEndBoardState();
-
-              newBoardState.move(robot, newMove);
-              RobotMove newMove = new RobotMove(robot, newMove, newBoardState);         
-              previousMoveList.add(newMove);
-            }
-          }
-          
-          // Add new move and return it
+          // Add new move and return it (along with new board state)
+          BoardState newBoardState = previousMoveList.getFinalBoardState().clone();
           newBoardState.move(robot, newMove);
           RobotMove newMove = new RobotMove(robot, newMove, newBoardState);         
           previousMoveList.add(newMove);
@@ -117,4 +101,30 @@ RobotMoveList getMovesNeededUsingOnlyRobot(Robot robot, Position target, int max
   
   // No possible moves found
   return MoveList.NULL;
+}
+
+RobotMoveList moveRobotOutOfWayIfNeeded(robot, proposedMove, boardState) {
+          
+          // If there are any robots blocking, move them out of way
+          BoardState newBoardState = null;
+          boolean checkForBlocking = true;
+          while (checkForBlocking) {
+            Position blockingRobotPosition = getPositionOfOtherRobotBlockingMove(newMove, robot, newBoardState);
+            if (blockingPosition == null) {
+              checkForBlocking = false;
+            } else {
+              if (newBoardState == null) {
+                newBoardState = previousMoveList.getFinalBoardState().clone();
+              } else {
+                newBoardState = newBoardState.clone();
+              }
+              
+              Robot blockingRobot = newBoardState.getRobotAt(blockingRobotPosition);
+              Move blockingMove = getAPossibleMove(blockingRobotPosition, EnumSet.of(leftDirectionm, rightDirections), newBoardState);
+              newBoardState.move(blockingRobot, blockingMove);
+              RobotMove newMove = new RobotMove(blockingRobot, blockingMove, newBoardState);
+              previousMoveList.add(newMove);
+            }
+          }
+  return moveList;
 }
