@@ -1,5 +1,38 @@
 Solving in reverse:
 
+enum Robot {RED, YELLOW, BLUE, GREEN}
+enum Direction {NORTH, EAST, SOUTH, WEST}
+
+class Position {
+  int column;
+  int row;
+}
+
+class BoardState {
+  Board board;
+  Position targetPosition;
+  Map<Robot, RobotPosition> robotToPosition;
+}
+
+class Move {
+  Position start;
+  Position end;
+}
+
+class RobotMove {
+  Robot robot;
+  Move move;
+  BoardState startBoardState;
+  BoardState getEndBoardState();
+}
+
+class RobotMoveList {
+  static String NULL = "NO MOVES";
+  List<RobotMove> robotMoves;
+  BoardState getInitialBoardState();
+  BoardState getFinalBoardState();
+}
+
 class RestrictionSet {
   Set<Restrictions> restriction;
 }
@@ -16,7 +49,7 @@ MoveList getMovesNeeded(Robot robot, Position target, int maxMoves, RestrictionS
   }
   
   // First check if can solve with only moves by robot
-  MoveList moveList = getMovesNeededUsingOnlyRobot(robot, target, maxMoves, restrictions.clone(), boardState);
+  RobotMoveList moveList = getMovesNeededUsingOnlyRobot(robot, target, maxMoves, restrictions.clone(), boardState);
   if (!moveList.equals(MoveList.NULL)) {
     return moveList;
   }
@@ -25,22 +58,56 @@ MoveList getMovesNeeded(Robot robot, Position target, int maxMoves, RestrictionS
   return getMovesNeededUsingOnlyRobot(robot, target, maxMoves, restrictions.clone(), boardState);
 }
 
-MoveList getMovesNeededUsingOnlyRobot(Robot robot, Position target, int maxMoves, RestrictionSet restrictions, BoardState boardState) {
+/**
+ * Find reverse positions from target and see if we can solve from there and then add the final path
+ */
+RobotMoveList getMovesNeededUsingOnlyRobot(Robot robot, Position target, int maxMoves, RestrictionSet restrictions, BoardState intialBoardState) {
   
-  // Find reverse positions from target and see if we can solve from there and then add the final path
-  for (Direction direction : getPossibleDirections(target, boardState)){
+  // Check each direction
+  for (Direction direction : getPossibleDirections(target, intialBoardState)){
+ 
+    // Check all positions in straight line from target to first obstacle. If we can get robot into this line, then it is easy
+    // to move him to target.
     Position start = target;
     Position end = Position.NO_END; // move until blocked
-    for (Position possiblePosition : getPossiblePositionsToMoveTo(start, end, direction, boardState)) {
+    for (Position possiblePosition : getPositionsInRowFrom(start, end, direction, initialBoardState)) {
+    
+      // If position has a wall that can be richocheted off, then we can get it into this line. Otherwise, ignore. 
       // Direction is absoulte (North, East, etc.).  Left is 90 degress counter-clockwise from given direction. Right is opposite.
       Direction leftDirection = getDirectionToLeft(direction);
-      Direction rightDirection = getDirectionToRight(direction);
-      
+      Direction rightDirection = getDirectionToRight(direction);      
       if (hasWall(possiblePosition, leftDirection)) {
-        MoveList previousMoveList = getMovesNeeded(robot, possiblePosition, maxMoves - 1, restrictions.clone(), boardState.clone());
+      
+        // Recursively see if we there are moves that get Robot to this position.
+        RobotMoveList previousMoveList = getMovesNeeded(robot, possiblePosition, maxMoves - 1, restrictions.clone(), intialBoardState.clone());
         if (!previousMoveList.equals(MoveList.NULL)) {
-          Move newMove = new Move(robot, possiblePosition, target);
-          // TODO: add check if there is a robot in positions in Move. If so move that robot.
+        
+          // We found a list of moves. Add a final move to the target and then return the new move list and the modified board
+          // state.
+          BoardState newBoardState = previousMoveList.getFinalBoardState().clone();
+          Move newMove = new Move(possiblePosition, target):
+          
+          // If there are any robots blocking, move them out of way
+          boolean checkForBlocking = true;
+          while (checkForBlocking) {
+            Position blockingRobotPosition = getPositionOfOtherRobotBlockingMove(newMove, robot, newBoardState);
+            if (blockingPosition == null) {
+              checkForBlocking = false;
+            } else {
+              Robot blockingRobot = newBoardState.getRobotAt(blockingRobotPosition);
+              Move blockinmove(blockingRobotPosition, EnumSet.of(leftDirectionm, rightDirections), newBoardState);
+              newBoardState.move(blockingRobot, blockingRobotMove);
+              newBoardState = moveBlockingRobot.getEndBoardState();
+
+              newBoardState.move(robot, newMove);
+              RobotMove newMove = new RobotMove(robot, newMove, newBoardState);         
+              previousMoveList.add(newMove);
+            }
+          }
+          
+          // Add new move and return it
+          newBoardState.move(robot, newMove);
+          RobotMove newMove = new RobotMove(robot, newMove, newBoardState);         
           previousMoveList.add(newMove);
           return previousMoveList;
         }
@@ -48,5 +115,6 @@ MoveList getMovesNeededUsingOnlyRobot(Robot robot, Position target, int maxMoves
     }
   }
   
+  // No possible moves found
   return MoveList.NULL;
 }
