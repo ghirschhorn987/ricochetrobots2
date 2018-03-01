@@ -112,11 +112,13 @@ RobotMoveList moveRobotOutOfWayIfNeeded(robot, proposedMove, boardState) {
   BoardState newBoardState = null;
   boolean checkForBlocking = true;
   while (checkForBlocking) {
-            Position blockingRobotPosition = getPositionOfOtherRobotBlockingMove(newMove, robot, newBoardState);
-            if (blockingPosition == null) {
-              checkForBlocking = false;
-            } else {
-              if (newBoardState == null) {
+    Position blockingRobotPosition = getPositionOfOtherRobotBlockingMove(robot, proposedMove, boardState);
+    if (blockingPosition == null) {
+      checkForBlocking = false;
+      break;
+    }
+
+    if (newBoardState == null) {
                 newBoardState = previousMoveList.getFinalBoardState().clone();
               } else {
                 newBoardState = newBoardState.clone();
